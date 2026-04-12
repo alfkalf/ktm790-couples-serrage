@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "io.github.alfkalf.twa",
+    "sha256_cert_fingerprints": ["7B:0F:77:1B:B1:2F:C9:67:25:EB:A5:EC:AB:A7:51:A0:3E:B7:F5:CC:7D:7D:4E:CF:57:1A:6F:5C:41:59:2A:77"]
+  }
+}]
