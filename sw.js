@@ -1,4 +1,4 @@
-const CACHE = 'ktm890-v4';
+const CACHE = 'ktm890-v5';
 const FILES = [
   './couples_serrage_ktm890.html',
   './manifest.json',
@@ -31,6 +31,10 @@ const FILES = [
   './eclates_img/page_32.png',
   './eclates_img/page_33.png',
   './eclates_img/page_34.png',
+  './manuel_img/ch27_p511.png',
+  './manuel_img/ch27_p512.png',
+  './manuel_img/ch27_p513.png',
+  './manuel_img/ch27_p514.png',
 ];
 
 self.addEventListener('install', e => {

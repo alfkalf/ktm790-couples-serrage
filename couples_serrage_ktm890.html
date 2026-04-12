@@ -126,7 +126,7 @@
     .eclates-torque-val { color:#f0a040; font-weight:700; white-space:nowrap; }
     .eclates-torque-right { display:flex; align-items:center; gap:6px; }
     .eclates-fav-btn { background:none; border:none; cursor:pointer; font-size:15px; color:#555; padding:0 2px; line-height:1; flex-shrink:0; }
-    .eclates-manual-btn { font-size:14px; text-decoration:none; opacity:0.6; flex-shrink:0; line-height:1; }
+    .eclates-manual-btn { font-size:14px; background:none; border:none; cursor:pointer; opacity:0.6; flex-shrink:0; line-height:1; padding:0; }
     .eclates-manual-btn:hover { opacity:1; }
     .eclates-disclaimer { background:#2a1800; border:1px solid #7a4000; border-radius:6px; padding:8px 12px; margin:8px 12px 0; font-size:11px; color:#cc8040; line-height:1.5; }
     .eclates-fav-btn.active { color:#f0a040; }
@@ -823,12 +823,12 @@ function renderEclate(idx) {
     const torqueHTML = hasTorque ? `<div class="eclates-torques">${p.torques.map(t => {
       const isFav = favs.includes(t.comp);
       const safeComp = t.comp.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-      const pdfLink = t.page ? `Manuel%20d%27atelier%202024%20890%20ADVENTURE%20R%20RALLY%20-.pdf#page=${t.page}` : null;
+      const imgSrc = t.page ? `manuel_img/ch27_p${t.page}.png` : null;
       return `<div class="eclates-torque">
         <span>${t.comp}</span>
         <span class="eclates-torque-right">
           <span class="eclates-torque-val">${t.val}</span>
-          ${pdfLink ? `<a href="${pdfLink}" target="_blank" class="eclates-manual-btn" title="Vérifier dans le manuel atelier (p.${t.page})">📖</a>` : ''}
+          ${imgSrc ? `<button class="eclates-manual-btn" onclick="openManualImg('${imgSrc}','p.${t.page}')" title="Vérifier dans le manuel atelier (p.${t.page})">📖</button>` : ''}
           <button class="eclates-fav-btn${isFav?' active':''}" data-comp="${safeComp}">${isFav?'★':'☆'}</button>
         </span>
       </div>`;
@@ -933,5 +933,25 @@ switchTab('moteur');
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
+
+<div id="manual-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;" onclick="closeManualImg()">
+  <div style="position:sticky;top:0;width:100%;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:#111;z-index:1;">
+    <span id="manual-modal-title" style="color:#f0a040;font-size:13px;font-weight:700;"></span>
+    <button onclick="closeManualImg()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;">✕</button>
+  </div>
+  <img id="manual-modal-img" src="" style="width:100%;max-width:900px;display:block;" onclick="event.stopPropagation()">
+</div>
+<script>
+function openManualImg(src, label) {
+  const m = document.getElementById('manual-modal');
+  document.getElementById('manual-modal-img').src = src;
+  document.getElementById('manual-modal-title').textContent = 'Manuel atelier — ' + label;
+  m.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeManualImg() {
+  document.getElementById('manual-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}</script>
 </body>
 </html>
