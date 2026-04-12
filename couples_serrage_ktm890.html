@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KTM 890 Adventure – Couples de serrage</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#c8421f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KTM 890">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; background: #1a1a1a; color: #e0e0e0; font-size: 14px; }
+
+    .header { background: #c8421f; color: white; padding: 14px 16px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 200; box-shadow: 0 2px 10px rgba(0,0,0,0.6); }
+    .header-text h1 { font-size: 16px; font-weight: 700; }
+    .header-text p { font-size: 10px; opacity: 0.75; margin-top: 2px; }
+    .header-right { margin-left: auto; }
+    #search { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.4); border-radius: 6px; color: white; padding: 7px 12px; font-size: 13px; width: 190px; outline: none; }
+    #search::placeholder { color: rgba(255,255,255,0.6); }
+    #search:focus { background: rgba(255,255,255,0.25); }
+
+    .tabs { display: flex; background: #222; border-bottom: 2px solid #333; padding: 0 8px; position: sticky; top: 56px; z-index: 190; overflow-x: auto; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { padding: 10px 13px; cursor: pointer; font-size: 12px; font-weight: 600; color: #777; border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+    .tab:hover { color: #ccc; }
+    .tab.active { color: #c8421f; border-bottom-color: #c8421f; }
+
+    .stats { font-size: 11px; color: #666; padding: 5px 16px; }
+    .legende { padding: 7px 14px; display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 1px solid #2a2a2a; }
+
+    .section { margin: 0 10px 20px; }
+    .section-title { background: #2a1a10; color: #c8421f; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 8px 14px; border-left: 4px solid #c8421f; border-radius: 4px 4px 0 0; }
+
+    table { width: 100%; border-collapse: collapse; background: #242424; border-radius: 0 0 6px 6px; overflow: hidden; }
+    thead th { background: #2e2e2e; color: #888; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; padding: 6px 10px; text-align: left; border-bottom: 1px solid #3a3a3a; }
+    tbody tr { border-bottom: 1px solid #2c2c2c; transition: background .1s; }
+    tbody tr:hover { background: #2d2d2d; }
+    tbody tr.hidden { display: none; }
+    td { padding: 8px 10px; vertical-align: middle; }
+    td.comp { color: #e8e8e8; }
+    td.thread { color: #999; font-family: monospace; font-size: 12px; white-space: nowrap; }
+    td.torque { font-weight: 700; font-size: 15px; color: #f0a040; white-space: nowrap; width: 90px; }
+    td.notes-col { width: 145px; }
+
+    .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 8px; white-space: nowrap; margin: 1px 1px 1px 0; }
+    .badge-loctite  { background: #3a1a1a; color: #e06060; border: 1px solid #602020; }
+    .badge-loctite2 { background: #2a1a3a; color: #c060e0; border: 1px solid #502060; }
+    .badge-seq      { background: #1a1a3a; color: #8080e0; border: 1px solid #303060; }
+    .badge-graisse  { background: #2a2000; color: #c8a040; border: 1px solid #504000; }
+    .badge-cuivre   { background: #2a1800; color: #d08030; border: 1px solid #603010; }
+
+    tbody tr.favorited { background: #3a2800 !important; border-left: 3px solid #f0a040; }
+    tbody tr.favorited:hover { background: #4a3200 !important; }
+    .fav-col { width: 28px; text-align: center; padding: 0 2px !important; }
+    .fav-btn { background: none; border: none; cursor: pointer; font-size: 16px; padding: 4px; color: #555; }
+    .fav-btn:hover { color: #f0a040; }
+    .fav-btn.active { color: #f0a040; }
+    mark { background: #c8421f; color: white; border-radius: 2px; padding: 0 1px; }
+
+    /* Suspension */
+    #view-suspension { display: none; padding: 12px; }
+    .susp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 14px; }
+    .susp-card { background: #1e1e1e; border: 1px solid #2e2e2e; border-radius: 8px; overflow: hidden; }
+    .susp-card-title { background: #2a1a10; color: #c8421f; font-size: 12px; font-weight: 700; padding: 9px 14px; border-left: 4px solid #c8421f; }
+    .susp-card-sub { background: #222; color: #888; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 5px 14px; }
+    .susp-table { width: 100%; border-collapse: collapse; }
+    .susp-table td { padding: 6px 12px; border-bottom: 1px solid #2a2a2a; font-size: 13px; }
+    .susp-table td:first-child { color: #999; width: 55%; }
+    .susp-table td:last-child { color: #f0a040; font-weight: 700; text-align: right; }
+    .susp-table tr.susp-hl td { background: #2a2a1a; }
+    .susp-sub { color: #c8421f; font-weight: 700; font-size: 11px; text-transform: uppercase; padding: 8px 12px 4px; }
+    .susp-info { padding: 8px 12px; font-size: 11px; color: #777; border-top: 1px solid #2a2a2a; }
+
+    /* Maintenance */
+    #view-maintenance { display: none; padding: 12px; }
+    .maint-title { background: #2a1a10; color: #c8421f; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 8px 14px; border-left: 4px solid #c8421f; border-radius: 4px 4px 0 0; }
+    .maint-table { width: 100%; border-collapse: collapse; background: #242424; border-radius: 0 0 6px 6px; overflow: hidden; margin-bottom: 20px; font-size: 12px; }
+    .maint-table thead th { background: #2e2e2e; color: #888; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 8px; border-bottom: 1px solid #3a3a3a; text-align: center; }
+    .maint-table thead th:first-child { text-align: left; }
+    .maint-table tbody td { padding: 7px 8px; border-bottom: 1px solid #2c2c2c; text-align: center; vertical-align: middle; }
+    .maint-table tbody td:first-child { text-align: left; color: #e0e0e0; padding-left: 10px; }
+    .dot-do    { color: #c8421f; font-size: 14px; font-weight: 700; }
+    .dot-check { color: #4a9fe0; font-size: 14px; }
+    .dot-na    { color: #444; font-size: 12px; }
+
+    /* Favoris */
+    #view-favs { display: none; padding: 16px; }
+    .fav-empty { text-align: center; color: #555; padding: 40px 20px; font-size: 14px; }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: #242424; border-radius: 10px; padding: 20px 24px; max-width: 480px; width: 100%; border: 1px solid #444; }
+    .modal-box h3 { color: #c8421f; font-size: 14px; margin-bottom: 10px; }
+    .modal-box p { color: #bbb; font-size: 13px; line-height: 1.7; }
+    .modal-close-btn { margin-top: 14px; background: #c8421f; color: white; border: none; border-radius: 6px; padding: 8px 20px; font-size: 13px; cursor: pointer; width: 100%; }
+
+    /* ── Éclatés ──────────────────────────────────────────────────────── */
+    #view-eclates { display: none; }
+    .eclates-sec-bar { display:flex; gap:6px; padding:8px 10px; overflow-x:auto; scrollbar-width:none; background:#1a1a1a; position:sticky; top:88px; z-index:100; border-bottom:1px solid #2a2a2a; }
+    .eclates-sec-bar::-webkit-scrollbar { display:none; }
+    .eclates-sec-btn { flex-shrink:0; background:#2a2a2a; border:1px solid #3a3a3a; border-radius:14px; color:#888; font-size:11px; font-weight:600; padding:5px 11px; cursor:pointer; white-space:nowrap; transition:all .15s; }
+    .eclates-sec-btn.active { background:#c8421f; border-color:#c8421f; color:#fff; }
+    .eclates-viewer { background:#e8e8e8; overflow:hidden; position:relative; height:48vh; min-height:240px; cursor:grab; user-select:none; touch-action:none; }
+    .eclates-viewer:active { cursor:grabbing; }
+    .eclates-viewer-inner { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+    .eclates-viewer-inner img { max-width:100%; max-height:100%; object-fit:contain; transform-origin:center center; will-change:transform; pointer-events:none; }
+    .eclates-zoom-info { position:absolute; bottom:8px; right:10px; font-size:10px; background:rgba(0,0,0,0.45); color:#fff; padding:2px 7px; border-radius:8px; pointer-events:none; }
+    .eclates-zoom-btns { position:absolute; bottom:8px; left:10px; display:flex; gap:5px; }
+    .eclates-zoom-btn { background:rgba(0,0,0,0.5); color:#fff; border:none; border-radius:5px; width:30px; height:30px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; }
+    .eclates-parts-wrap { padding:0 10px 28px; }
+    .eclates-parts-hdr { font-size:11px; font-weight:700; color:#c8421f; text-transform:uppercase; letter-spacing:.8px; padding:9px 4px 6px; border-bottom:1px solid #2a2a2a; margin-bottom:4px; display:flex; justify-content:space-between; align-items:center; }
+    .eclates-parts-hdr span:last-child { font-weight:400; color:#666; font-size:10px; text-transform:none; letter-spacing:0; }
+    .eclates-part { display:flex; align-items:flex-start; gap:8px; padding:6px 6px; border-bottom:1px solid #1e1e1e; }
+    .eclates-part.has-t { background:#1a1500; border-left:3px solid #f0a040; padding-left:4px; }
+    .eclates-pos { min-width:22px; height:22px; border-radius:50%; background:#2e2e2e; color:#888; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+    .has-t .eclates-pos { background:#f0a040; color:#111; }
+    .eclates-body { flex:1; min-width:0; }
+    .eclates-pname { font-size:12px; color:#ddd; line-height:1.35; }
+    .eclates-psub { font-size:10px; color:#555; font-family:monospace; margin-top:1px; }
+    .eclates-torques { margin-top:4px; display:flex; flex-direction:column; gap:2px; }
+    .eclates-torque { background:#221c00; border:1px solid #3a3000; border-radius:4px; padding:3px 8px; font-size:11px; color:#bbb; display:flex; justify-content:space-between; align-items:center; gap:6px; }
+    .eclates-torque-val { color:#f0a040; font-weight:700; white-space:nowrap; }
+    .eclates-torque-right { display:flex; align-items:center; gap:6px; }
+    .eclates-fav-btn { background:none; border:none; cursor:pointer; font-size:15px; color:#555; padding:0 2px; line-height:1; flex-shrink:0; }
+    .eclates-manual-btn { font-size:14px; text-decoration:none; opacity:0.6; flex-shrink:0; line-height:1; }
+    .eclates-manual-btn:hover { opacity:1; }
+    .eclates-disclaimer { background:#2a1800; border:1px solid #7a4000; border-radius:6px; padding:8px 12px; margin:8px 12px 0; font-size:11px; color:#cc8040; line-height:1.5; }
+    .eclates-fav-btn.active { color:#f0a040; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-text">
+    <h1>KTM 890 ADVENTURE — Couples de serrage</h1>
+    <p>Manuel d'atelier 2024 · 890 Adventure R / Rally</p>
+  </div>
+  <div class="header-right">
+    <input type="text" id="search" placeholder="🔍 Rechercher…" oninput="doSearch(this.value)">
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-moteur"      onclick="switchTab('moteur')">🔧 Moteur</div>
+  <div class="tab"        id="tab-chassis"     onclick="switchTab('chassis')">🏍 Châssis</div>
+  <div class="tab"        id="tab-suspension"  onclick="switchTab('suspension')">⚙️ Suspension</div>
+  <div class="tab"        id="tab-maintenance" onclick="switchTab('maintenance')">🛠 Maintenance</div>
+  <div class="tab"        id="tab-eclates"     onclick="switchTab('eclates')">📋 Éclatés</div>
+  <div class="tab"        id="tab-favs"        onclick="switchTab('favs')">⭐ Favoris</div>
+</div>
+
+<div class="stats"><span id="stats-text"></span></div>
+
+<div class="legende">
+  <span class="badge badge-loctite">Loctite 243</span>
+  <span class="badge badge-loctite2">Loctite 2701</span>
+  <span class="badge badge-seq">Séquence</span>
+  <span class="badge badge-graisse">Graisse</span>
+  <span class="badge badge-cuivre">Pâte cuivre</span>
+</div>
+
+<!-- ══════════════════════ ÉCLATÉS ══════════════════════ -->
+<div id="view-eclates">
+  <div class="eclates-sec-bar" id="eclates-sec-bar"></div>
+  <div class="eclates-viewer" id="eclates-viewer">
+    <div class="eclates-viewer-inner" id="eclates-viewer-inner">
+      <img id="eclates-img" src="" alt="Vue éclatée">
+    </div>
+    <div class="eclates-zoom-info" id="eclates-zoom-level">1×</div>
+    <div class="eclates-zoom-btns">
+      <button class="eclates-zoom-btn" onclick="eclateZoomBy(1.4)">+</button>
+      <button class="eclates-zoom-btn" onclick="eclateZoomBy(0.71)">−</button>
+      <button class="eclates-zoom-btn" onclick="eclateZoomReset()" style="font-size:12px">⟳</button>
+    </div>
+  </div>
+  <div class="eclates-parts-wrap">
+    <div class="eclates-disclaimer">⚠️ Recoupements automatiques. Vérifier la valeur exacte dans le manuel atelier (bouton 📖).</div>
+    <div class="eclates-parts-hdr" id="eclates-parts-title"><span>—</span><span></span></div>
+    <div id="eclates-parts-list"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ MOTEUR ══════════════════════ -->
+<div id="view-moteur">
+
+  <div class="section">
+    <div class="section-title">🔩 Culasse &amp; Distribution</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Bougie d'allumage</td><td class="thread">M10</td><td class="torque">11 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis de la culasse — 1er cran</td><td class="thread">M10×1,25</td><td class="torque">5 N·m</td><td class="notes-col"><span class="badge badge-seq">Séquence</span><span class="badge badge-graisse">Graisse</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis de la culasse — 2e cran</td><td class="thread">M10×1,25</td><td class="torque">15 N·m</td><td class="notes-col"><span class="badge badge-seq">Séquence</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis de la culasse — 3e cran</td><td class="thread">M10×1,25</td><td class="torque">+90°</td><td class="notes-col"><span class="badge badge-seq">Séquence</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis de la culasse — 4e cran</td><td class="thread">M10×1,25</td><td class="torque">+90°</td><td class="notes-col"><span class="badge badge-seq">Séquence</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis couvercle de soupape</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis rampe paliers arbre à cames</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Bouchon rampe paliers</td><td class="thread">M10×1</td><td class="torque">12 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Bouchon axe de culbuteur</td><td class="thread">M10×1</td><td class="torque">8 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis fixation axiale culbuteur</td><td class="thread">M5</td><td class="torque">6 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis déverrouillage tendeur chaîne</td><td class="thread">M10×1</td><td class="torque">8 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis fermeture tendeur chaîne distribution</td><td class="thread">M24×1,5</td><td class="torque">25 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Bouchon vidange huile culasse</td><td class="thread">M12×1,5</td><td class="torque">15 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis guide-chaîne supérieur</td><td class="thread">M6</td><td class="torque">8 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🔩 Carter &amp; Vilebrequin</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis palier de bielle — 1er cran</td><td class="thread">M8×0,75</td><td class="torque">5 N·m</td><td class="notes-col"><span class="badge badge-seq">Séquence</span><span class="badge badge-graisse">Graisse</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis palier de bielle — 2e cran</td><td class="thread">M8×0,75</td><td class="torque">20 N·m</td><td class="notes-col"><span class="badge badge-seq">Séquence</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis palier de bielle — 3e cran</td><td class="thread">M8×0,75</td><td class="torque">+90°</td><td class="notes-col"><span class="badge badge-seq">Séquence</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis avec rondelle carter moteur</td><td class="thread">M8×65/90</td><td class="torque">25 N·m</td><td class="notes-col"><span class="badge badge-graisse">Graisse</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis pour bloc moteur (M8)</td><td class="thread">M8×45/55/65/90</td><td class="torque">25 N·m</td><td class="notes-col"><span class="badge badge-graisse">Graisse</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis pour bloc moteur (M6)</td><td class="thread">M6×30/60</td><td class="torque">12 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis rail de serrage</td><td class="thread">M8</td><td class="torque">15 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis détecteur de cognement</td><td class="thread">M8</td><td class="torque">20 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Fermeture à vis de blocage</td><td class="thread">M8</td><td class="torque">15 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Autres vis moteur</td><td class="thread">M8</td><td class="torque">20 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Autres vis moteur</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Autres vis moteur</td><td class="thread">M5</td><td class="torque">6 N·m</td><td class="notes-col"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🔩 Embrayage &amp; Transmission primaire</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Écrou noix d'embrayage</td><td class="thread">M20×1,5</td><td class="torque">135 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Écrou pignon de chaîne (primaire)</td><td class="thread">M20×1,5</td><td class="torque">100 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis plateau de pression</td><td class="thread">M5</td><td class="torque">3 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis plateau pression embrayage</td><td class="thread">M6</td><td class="torque">8 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis carter d'embrayage</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis levier commande embrayage</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Gicleur huile graissage embrayage</td><td class="thread">M8</td><td class="torque">5 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis bague de roue libre</td><td class="thread">M6</td><td class="torque">14 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis fixation arbre d'équilibrage</td><td class="thread">M5</td><td class="torque">5 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🔩 Alternateur &amp; Démarreur</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis du rotor (alternateur)</td><td class="thread">M12×1,5</td><td class="torque">90 N·m</td><td class="notes-col"><span class="badge badge-graisse">Graisse</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis du stator</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis couvre-alternateur</td><td class="thread">M6/M6×35</td><td class="torque">10 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Bouchon couvre-alternateur</td><td class="thread">M24</td><td class="torque">8 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis démarreur électrique</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Écrou câble démarreur électrique</td><td class="thread">M6</td><td class="torque">5 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis bobine d'allumage</td><td class="thread">M6</td><td class="torque">8 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis capteur régime vilebrequin</td><td class="thread">M5</td><td class="torque">6 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🔩 Boîte de vitesses &amp; Sélection</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis sélecteur</td><td class="thread">M6</td><td class="torque">14 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis blocage sélecteur</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis tôle fixation tambour sélection</td><td class="thread">M5</td><td class="torque">6 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis capteur arbre de sélection</td><td class="thread">M5</td><td class="torque">6 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis capteur rapport engagé</td><td class="thread">M5</td><td class="torque">5 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis capteur angle d'oscillation (6-D)</td><td class="thread">M5</td><td class="torque">6 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis levier de verrouillage</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis tôle fixation arbre sélection</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Écrou tringle de changement de vitesse</td><td class="thread">M6</td><td class="torque">6 N·m</td><td class="notes-col"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🔩 Lubrification &amp; Refroidissement</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Bouchon crépine d'huile</td><td class="thread">M20×1,5</td><td class="torque">20 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Contacteur pression d'huile</td><td class="thread">M10×1</td><td class="torque">10 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis unité pompe à huile</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis couvercle filtre à huile</td><td class="thread">M5</td><td class="torque">6 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis pignon intermédiaire pompe huile</td><td class="thread">M8</td><td class="torque">15 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Gicleur huile refroidissement piston</td><td class="thread">M5</td><td class="torque">2 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Gicleurs d'huile dans la culasse</td><td class="thread">M5</td><td class="torque">2 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Capteur température liquide refroidissement</td><td class="thread">M10×1,25</td><td class="torque">10 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis corps du thermostat</td><td class="thread">M5</td><td class="torque">6 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis couvercle pompe à eau</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis turbine pompe à eau</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Bouchon chemise d'eau</td><td class="thread">M16×1,5</td><td class="torque">20 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis échangeur thermique huile-eau</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Bouchon perçage vidange pompe eau</td><td class="thread">EJOTALtracs 60×14</td><td class="torque">8 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🔩 Échappement (côté moteur)</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Écrou bride d'échappement</td><td class="thread">M8</td><td class="torque">15 N·m</td><td class="notes-col"><span class="badge badge-cuivre">Pâte cuivre</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Goujon bride pot d'échappement</td><td class="thread">M8</td><td class="torque">15 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Collier de serrage pipe d'admission</td><td class="thread">M4</td><td class="torque">2,5 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis tubulure de ventilation</td><td class="thread">EJOTALtracs M6×12</td><td class="torque">8 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+    </tbody></table>
+  </div>
+
+</div><!-- /view-moteur -->
+
+<!-- ══════════════════════ CHÂSSIS ══════════════════════ -->
+<div id="view-chassis" style="display:none">
+
+  <div class="section">
+    <div class="section-title">🏍 Roues &amp; Axes</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis de l'axe de roue avant</td><td class="thread">M25×1,5</td><td class="torque">45 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Écrou axe de roue arrière</td><td class="thread">M25×1,5</td><td class="torque">90 N·m</td><td class="notes-col"><span class="badge badge-graisse">Graisse</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis pincement axe roue avant</td><td class="thread">M8</td><td class="torque">15 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Sonde lambda</td><td class="thread">M18×1,5</td><td class="torque">50 N·m</td><td class="notes-col"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🏍 Freins</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis disque de frein avant</td><td class="thread">M6</td><td class="torque">14 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis disque de frein arrière</td><td class="thread">M6</td><td class="torque">14 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis étrier de frein avant (M10)</td><td class="thread">M10×1,25</td><td class="torque">45 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis étrier de frein avant (M8)</td><td class="thread">M8</td><td class="torque">25 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Boulon étrier de frein arrière</td><td class="thread">M8</td><td class="torque">22 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Boulon fixation plaquettes de frein</td><td class="thread">M8</td><td class="torque">10 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis cylindre de frein arrière</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Raccord vissé pédale frein arrière</td><td class="thread">M8</td><td class="torque">25 N·m</td><td class="notes-col"><span class="badge badge-loctite2">Loctite 2701</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Écrou vis de couronne (frein arrière)</td><td class="thread">M8</td><td class="torque">35 N·m</td><td class="notes-col"><span class="badge badge-loctite2">Loctite 2701</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis creuse durite de frein</td><td class="thread">M10×1</td><td class="torque">25 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Écrou réglage pédale frein arrière</td><td class="thread">M6</td><td class="torque">6 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis module ABS</td><td class="thread">M6</td><td class="torque">8 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Couvercle réservoir frein avant</td><td class="thread">—</td><td class="torque">2 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Couvercle réservoir frein arrière</td><td class="thread">—</td><td class="torque">1,5 N·m</td><td class="notes-col"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🏍 Direction &amp; Guidon</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis de la tête de direction</td><td class="thread">M20×1,5</td><td class="torque">18 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis de fixation de guidon (flèche)</td><td class="thread">M10</td><td class="torque">50 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis de fixation de guidon</td><td class="thread">M10</td><td class="torque">45 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis bride serrage guidon</td><td class="thread">M8</td><td class="torque">20 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis amortisseur de direction (support)</td><td class="thread">M8</td><td class="torque">8 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🏍 Fourche</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis té supérieur de fourche</td><td class="thread">M8</td><td class="torque">15 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis té inférieur de fourche</td><td class="thread">M8</td><td class="torque">12 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis tube de fourche</td><td class="thread">M8</td><td class="torque">20 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis protection de fourche</td><td class="thread">M5×12/17</td><td class="torque">5 N·m</td><td class="notes-col"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🏍 Suspension arrière &amp; Bras oscillant</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis amortisseur en bas</td><td class="thread">M12</td><td class="torque">80 N·m</td><td class="notes-col"><span class="badge badge-loctite2">Loctite 2701</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis amortisseur en haut</td><td class="thread">M12</td><td class="torque">80 N·m</td><td class="notes-col"><span class="badge badge-loctite2">Loctite 2701</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis de l'axe du bras oscillant</td><td class="thread">M12</td><td class="torque">100 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Bague logement amortisseur</td><td class="thread">M20LH×1,5</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-graisse">Graisse</span></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🏍 Cadre &amp; Fixations moteur</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis support moteur</td><td class="thread">M10</td><td class="torque">45 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis support assemblage fixation moteur</td><td class="thread">M8</td><td class="torque">25 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis cadre protection moteur</td><td class="thread">M8</td><td class="torque">25 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis tôle protection moteur</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🏍 Échappement (partie cycle)</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis collier pré-silencieux avant</td><td class="thread">M6</td><td class="torque">8 N·m</td><td class="notes-col"><span class="badge badge-cuivre">Pâte cuivre</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis pré-silencieux avant sur cadre</td><td class="thread">M8</td><td class="torque">15 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis fixation silencieux arrière</td><td class="thread">M8</td><td class="torque">15 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis collier silencieux arrière</td><td class="thread">M6</td><td class="torque">8 N·m</td><td class="notes-col"></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🏍 Béquille &amp; Repose-pieds</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis béquille latérale</td><td class="thread">M10</td><td class="torque">40 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis plaque fixation support béquille</td><td class="thread">M8</td><td class="torque">25 N·m</td><td class="notes-col"><span class="badge badge-loctite2">Loctite 2701</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis capteur béquille latérale</td><td class="thread">M5</td><td class="torque">2 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis support repose-pied arrière</td><td class="thread">M8</td><td class="torque">25 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis support repose-pied avant</td><td class="thread">M10×30/40/65</td><td class="torque">45 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+    </tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🏍 Carrosserie &amp; Électrique</div>
+    <table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis de fixation de selle</td><td class="thread">M8</td><td class="torque">25 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis serrure de selle</td><td class="thread">M6</td><td class="torque">10 N·m</td><td class="notes-col"><span class="badge badge-loctite">Loctite 243</span></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis cache réservoir carburant</td><td class="thread">M6×12/22</td><td class="torque">8 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis support batterie</td><td class="thread">M6</td><td class="torque">4,5 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis pôle de batterie</td><td class="thread">M6</td><td class="torque">4,5 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis capteur vitesse roue (avant/arrière)</td><td class="thread">M6</td><td class="torque">6 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis régulateur de tension</td><td class="thread">M6</td><td class="torque">4 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Vis support masque / instruments</td><td class="thread">M5</td><td class="torque">5 N·m</td><td class="notes-col"></td></tr>
+      <tr><td class="fav-col"><button class="fav-btn" onclick="toggleFav(this)">☆</button></td><td class="comp">Écrou soupape (valve roue)</td><td class="thread">ISO 10V2</td><td class="torque">12 N·m</td><td class="notes-col"><span class="badge badge-loctite2">Loctite 2701</span></td></tr>
+    </tbody></table>
+  </div>
+
+</div><!-- /view-chassis -->
+
+<!-- ══════════════════════ SUSPENSION ══════════════════════ -->
+<div id="view-suspension">
+  <div class="susp-grid">
+
+    <div class="susp-card">
+      <div class="susp-card-title">🔵 Fourche WP XPLOR OC — Modèles standard</div>
+      <div class="susp-card-sub">Réf. A610C154W401000</div>
+      <table class="susp-table">
+        <tr><td colspan="2" class="susp-sub">Compression</td></tr>
+        <tr><td>Confort</td><td>20 clics</td></tr>
+        <tr><td>Standard</td><td>15 clics</td></tr>
+        <tr><td>Sport</td><td>10 clics</td></tr>
+        <tr><td>Charge max</td><td>15 clics</td></tr>
+        <tr><td colspan="2" class="susp-sub">Détente</td></tr>
+        <tr><td>Confort</td><td>18 clics</td></tr>
+        <tr><td>Standard</td><td>15 clics</td></tr>
+        <tr><td>Sport</td><td>10 clics</td></tr>
+        <tr><td>Charge max</td><td>15 clics</td></tr>
+        <tr><td colspan="2" class="susp-sub">Précontrainte ressort</td></tr>
+        <tr><td>Confort / Standard / Sport</td><td>+0</td></tr>
+        <tr class="susp-hl"><td>Charge max</td><td>+3</td></tr>
+        <tr><td colspan="2" class="susp-sub">Taux d'élasticité</td></tr>
+        <tr><td>Pilote 65–75 kg</td><td>6,2 N/mm</td></tr>
+        <tr><td>Pilote 75–85 kg</td><td>6,7 N/mm</td></tr>
+        <tr><td>Pilote 85–95 kg</td><td>7,2 N/mm</td></tr>
+      </table>
+      <div class="susp-info">Long. ressort avec précontrainte : 464 mm · Long. fourche : 912 mm<br>Huile : 630 ± 5 ml SAE 4 par bras · Débattement : 240 mm</div>
+    </div>
+
+    <div class="susp-card">
+      <div class="susp-card-title">🟠 Fourche WP XPLOR PRO — Modèles spéciaux (R / Rally)</div>
+      <div class="susp-card-sub">Réf. A610C155X403200</div>
+      <table class="susp-table">
+        <tr><td colspan="2" class="susp-sub">Compression</td></tr>
+        <tr><td>Standard</td><td>12 clics</td></tr>
+        <tr><td colspan="2" class="susp-sub">Détente</td></tr>
+        <tr><td>Standard</td><td>18 clics</td></tr>
+        <tr><td colspan="2" class="susp-sub">Précontrainte ressort</td></tr>
+        <tr><td>Standard</td><td>0 clic</td></tr>
+        <tr><td colspan="2" class="susp-sub">Taux d'élasticité</td></tr>
+        <tr><td>Pilote 65–75 kg</td><td>6,2 N/mm</td></tr>
+        <tr><td>Pilote 75–85 kg</td><td>6,4 N/mm</td></tr>
+        <tr><td>Pilote 85–95 kg</td><td>6,6 N/mm</td></tr>
+        <tr><td>Pilote 95–105 kg</td><td>6,8 N/mm</td></tr>
+        <tr><td colspan="2" class="susp-sub">Volumes d'huile</td></tr>
+        <tr><td>Mécanisme extérieur</td><td>440 ml SAE 4</td></tr>
+        <tr><td>Cartouche</td><td>175 ml SAE 4</td></tr>
+      </table>
+      <div class="susp-info">Long. ressort : 488 mm · Long. fourche : 942 mm · Débattement : 270 mm</div>
+    </div>
+
+    <div class="susp-card">
+      <div class="susp-card-title">🔵 Amortisseur WP Suspension PDS — Modèles standard</div>
+      <div class="susp-card-sub">Réf. A610C454W305000</div>
+      <table class="susp-table">
+        <tr><td colspan="2" class="susp-sub">Compression Petite Vitesse (clics)</td></tr>
+        <tr><td>Confort</td><td>20 clics</td></tr>
+        <tr><td>Standard</td><td>15 clics</td></tr>
+        <tr><td>Sport</td><td>10 clics</td></tr>
+        <tr class="susp-hl"><td>Charge max</td><td>7 clics</td></tr>
+        <tr><td colspan="2" class="susp-sub">Compression Grande Vitesse (tours)</td></tr>
+        <tr><td>Confort</td><td>2 tours</td></tr>
+        <tr><td>Standard</td><td>1,5 tour</td></tr>
+        <tr><td>Sport</td><td>1 tour</td></tr>
+        <tr class="susp-hl"><td>Charge max</td><td>0,5 tour</td></tr>
+        <tr><td colspan="2" class="susp-sub">Détente (clics)</td></tr>
+        <tr><td>Confort</td><td>23 clics</td></tr>
+        <tr><td>Standard</td><td>15 clics</td></tr>
+        <tr><td>Sport</td><td>12 clics</td></tr>
+        <tr class="susp-hl"><td>Charge max</td><td>5 clics</td></tr>
+        <tr><td colspan="2" class="susp-sub">Précontrainte ressort (tours)</td></tr>
+        <tr><td>Confort / Standard / Sport</td><td>4 tours</td></tr>
+        <tr class="susp-hl"><td>Charge max</td><td>10 tours</td></tr>
+        <tr><td colspan="2" class="susp-sub">Ressort &amp; fluides</td></tr>
+        <tr><td>Taux élasticité (75–85 kg)</td><td>95 N/mm</td></tr>
+        <tr><td>Long. montage</td><td>380 mm</td></tr>
+        <tr><td>Long. ressort</td><td>201,3 mm</td></tr>
+        <tr><td>Pression gaz</td><td>16 bar (232 psi)</td></tr>
+      </table>
+      <div class="susp-info">Huile amortisseur : SAE 2,5 · Débattement arrière : 240 mm</div>
+    </div>
+
+    <div class="susp-card">
+      <div class="susp-card-title">🟠 Amortisseur WP XPLOR PRO — Modèles spéciaux (R / Rally)</div>
+      <div class="susp-card-sub">Réf. A610C455X305200</div>
+      <table class="susp-table">
+        <tr><td colspan="2" class="susp-sub">Compression Petite Vitesse (clics)</td></tr>
+        <tr><td>Confort</td><td>15 clics</td></tr>
+        <tr><td>Standard</td><td>12 clics</td></tr>
+        <tr><td>Sport</td><td>10 clics</td></tr>
+        <tr><td>Charge max</td><td>10 clics</td></tr>
+        <tr><td colspan="2" class="susp-sub">Compression Grande Vitesse (clics)</td></tr>
+        <tr><td>Confort</td><td>42 clics</td></tr>
+        <tr><td>Standard</td><td>40 clics</td></tr>
+        <tr><td>Sport</td><td>38 clics</td></tr>
+        <tr class="susp-hl"><td>Charge max</td><td>28 clics</td></tr>
+        <tr><td colspan="2" class="susp-sub">Détente (clics)</td></tr>
+        <tr><td>Confort / Standard / Sport / Charge max</td><td>15 clics</td></tr>
+        <tr><td colspan="2" class="susp-sub">Précontrainte ressort (mm)</td></tr>
+        <tr><td>Confort</td><td>5 mm</td></tr>
+        <tr><td>Standard</td><td>11 mm</td></tr>
+        <tr><td>Sport</td><td>5 mm</td></tr>
+        <tr><td colspan="2" class="susp-sub">Taux d'élasticité</td></tr>
+        <tr><td>Pilote 65–75 kg</td><td>89 N/mm</td></tr>
+        <tr><td>Pilote 75–85 kg</td><td>92 N/mm</td></tr>
+        <tr><td>Pilote 85–95 kg</td><td>95 N/mm</td></tr>
+        <tr><td>Pilote 95–105 kg</td><td>98 N/mm</td></tr>
+        <tr><td>Long. montage</td><td>390 mm</td></tr>
+        <tr><td>Long. ressort</td><td>220 mm</td></tr>
+        <tr><td>Pression gaz</td><td>16 bar (232 psi)</td></tr>
+      </table>
+      <div class="susp-info">Huile amortisseur : SAE 2,5 · Débattement arrière : 270 mm</div>
+    </div>
+
+    <div class="susp-card">
+      <div class="susp-card-title">🏍 Pneus &amp; Pressions</div>
+      <div class="susp-card-sub">KTM 890 Adventure R / Rally 2024</div>
+      <table class="susp-table">
+        <tr><td colspan="2" class="susp-sub">Pneumatiques d'origine</td></tr>
+        <tr><td>Avant</td><td>90/90-21 54T M+S TT<br><span style="color:#777;font-size:11px;">Mitas Enduro Trail +</span></td></tr>
+        <tr><td>Arrière</td><td>150/70 B18 70T M+S TT<br><span style="color:#777;font-size:11px;">Mitas Enduro Trail +</span></td></tr>
+        <tr><td colspan="2" class="susp-sub">Pressions (seul / avec passager)</td></tr>
+        <tr><td>Avant</td><td>2,4 bar (35 psi)</td></tr>
+        <tr><td>Arrière</td><td>2,4 bar (35 psi)</td></tr>
+        <tr><td colspan="2" class="susp-sub">Pressions tout-terrain</td></tr>
+        <tr><td>Avant</td><td>1,8 bar (26 psi)</td></tr>
+        <tr><td>Arrière</td><td>1,8 bar (26 psi)</td></tr>
+        <tr><td colspan="2" class="susp-sub">Pressions pleine charge</td></tr>
+        <tr><td>Avant</td><td>2,6 bar (38 psi)</td></tr>
+        <tr><td>Arrière</td><td>2,9 bar (42 psi)</td></tr>
+        <tr><td colspan="2" class="susp-sub">Usure limite disques</td></tr>
+        <tr><td>Avant (Ø 320 mm)</td><td>4,5 mm min</td></tr>
+        <tr><td>Arrière (Ø 260 mm)</td><td>4,5 mm min</td></tr>
+      </table>
+    </div>
+
+    <div class="susp-card">
+      <div class="susp-card-title">⚙️ Données techniques moteur</div>
+      <div class="susp-card-sub">889 cm³ · DOHC · 2 cylindres en ligne</div>
+      <table class="susp-table">
+        <tr><td>Alésage × course</td><td>90,7 × 68,8 mm</td></tr>
+        <tr><td>Compression</td><td>13,5:1</td></tr>
+        <tr><td>Distribution</td><td>DOHC, 4 soupapes/cyl.</td></tr>
+        <tr><td>Bougie</td><td>NGK LMAR9AI-10</td></tr>
+        <tr><td>Écartement électrodes</td><td>1,0 mm</td></tr>
+        <tr><td>Ralenti</td><td>1 600 ± 50 tr/min</td></tr>
+        <tr><td>Transmission primaire</td><td>39:75</td></tr>
+        <tr><td>Démultiplication secondaire</td><td>16:45</td></tr>
+        <tr><td>Jeu soupapes adm. (20°C)</td><td>0,10–0,15 mm</td></tr>
+        <tr><td>Jeu soupapes éch. (20°C)</td><td>0,15–0,20 mm</td></tr>
+        <tr><td colspan="2" class="susp-sub">Capacités de remplissage</td></tr>
+        <tr><td>Huile moteur (SAE 10W/50)</td><td>2,9 l (3,1 qt)</td></tr>
+        <tr><td>Liquide refroidissement</td><td>1,60 l (1,69 qt)</td></tr>
+        <tr><td>Réservoir carburant</td><td>19,5 l — réserve 3 l</td></tr>
+        <tr><td>Carburant</td><td>Sans plomb ROZ 95 (E5/E10)</td></tr>
+        <tr><td colspan="2" class="susp-sub">Électrique</td></tr>
+        <tr><td>Batterie</td><td>HTZ12A-BS · 12V · 10 Ah</td></tr>
+        <tr><td>Fusibles</td><td>10A / 15A / 25A / 30A</td></tr>
+      </table>
+    </div>
+
+  </div>
+</div><!-- /view-suspension -->
+
+<!-- ══════════════════════ MAINTENANCE ══════════════════════ -->
+<div id="view-maintenance">
+  <div class="maint-title">Plan d'entretien — KTM 890 Adventure 2024</div>
+  <table class="maint-table">
+    <thead>
+      <tr>
+        <th style="width:40%;text-align:left">Opération</th>
+        <th>1 000 km</th>
+        <th>15 000 km<br>12 mois</th>
+        <th>30 000 km<br>24 mois</th>
+        <th>60 000 km<br>48 mois</th>
+      </tr>
+    </thead>
+    <tbody id="maint-tbody"></tbody>
+  </table>
+  <div style="padding:4px 2px 24px;font-size:11px;color:#666;">
+    <span class="dot-do">●</span> Remplacer &nbsp;·&nbsp; <span class="dot-check">○</span> Contrôler / Régler &nbsp;·&nbsp; <span class="dot-na">—</span> Non applicable
+  </div>
+</div>
+
+<!-- ══════════════════════ FAVORIS ══════════════════════ -->
+<div id="view-favs">
+  <div class="fav-empty" id="fav-empty">⭐ Aucun favori — appuyez sur ☆ dans les tableaux</div>
+  <div id="fav-list"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <h3 id="modal-title"></h3>
+    <p id="modal-body"></p>
+    <button class="modal-close-btn" onclick="closeModal()">Fermer</button>
+  </div>
+</div>
+
+<script>
+// ── Maintenance ───────────────────────────────────────────────────────
+const MAINT = [
+  ['Huile moteur',                                       '●','●','●','●'],
+  ['Filtre à huile',                                     '●','●','●','●'],
+  ['Filtre à air — contrôle',                            '○','○','○','○'],
+  ['Filtre à air — remplacement',                        '—','—','●','●'],
+  ['Bougies d\'allumage — contrôle',                    '—','○','○','○'],
+  ['Bougies d\'allumage — remplacement',                '—','—','●','●'],
+  ['Jeu aux soupapes',                                   '—','—','○','○'],
+  ['Liquide de refroidissement — contrôle niveau',       '○','○','○','○'],
+  ['Liquide de refroidissement — remplacement',          '—','—','—','●'],
+  ['Liquide de frein avant',                             '—','●','●','●'],
+  ['Liquide de frein arrière',                           '—','●','●','●'],
+  ['Plaquettes de frein — usure',                        '○','○','○','○'],
+  ['Disques de frein — usure (≥ 4,5 mm)',               '○','○','○','○'],
+  ['Durites de frein — état',                            '○','○','○','●'],
+  ['Chaîne — tension et graissage',                      '○','○','○','○'],
+  ['Chaîne — usure',                                     '—','○','○','●'],
+  ['Pignon / couronne — usure',                          '—','○','○','○'],
+  ['Câble d\'embrayage — jeu et état',                  '○','○','○','○'],
+  ['Commande des gaz — jeu et fonctionnement',           '○','○','○','○'],
+  ['Levier de frein à main — jeu',                       '○','○','○','○'],
+  ['Pédale de frein arrière — jeu',                      '○','○','○','○'],
+  ['Pneus — pression et état',                           '○','○','○','○'],
+  ['Rayons de roues — tension',                          '○','○','○','○'],
+  ['Roulements de roue — jeu',                           '—','○','○','○'],
+  ['Fourche — étanchéité et fonctionnement',             '○','○','○','○'],
+  ['Huile de fourche (WP XPLOR OC)',                     '—','—','—','●'],
+  ['Amortisseur — fonctionnement',                       '○','○','○','○'],
+  ['Huile amortisseur (WP PDS)',                         '—','—','—','●'],
+  ['Bras oscillant — jeu roulements',                    '—','○','○','○'],
+  ['Roulements de direction',                            '○','○','○','○'],
+  ['Vis de tête de direction — serrage',                 '○','○','○','○'],
+  ['Béquille latérale — ressort et capteur',             '○','○','○','○'],
+  ['Lumières — fonctionnement',                          '○','○','○','○'],
+  ['Batterie — charge et bornes',                        '○','○','○','○'],
+  ['Codes défauts — lecture diagnostic',                 '○','○','○','○'],
+  ['Réglage CO (émissions)',                             '—','—','○','○'],
+  ['Filtre à carburant',                                 '—','—','—','●'],
+  ['Échappement — étanchéité et fixations',              '○','○','○','○'],
+  ['Protection moteur — état et fixations',              '○','○','○','○'],
+  ['Vis et écrous — serrage général',                    '○','○','○','○'],
+  ['Test route complet',                                 '○','○','○','○'],
+];
+
+(function(){
+  const tbody = document.getElementById('maint-tbody');
+  MAINT.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r[0]}</td>` +
+      [r[1],r[2],r[3],r[4]].map(v =>
+        v==='●' ? `<td><span class="dot-do">●</span></td>` :
+        v==='○' ? `<td><span class="dot-check">○</span></td>` :
+                  `<td><span class="dot-na">—</span></td>`
+      ).join('');
+    tbody.appendChild(tr);
+  });
+})();
+
+// ── Favoris ───────────────────────────────────────────────────────────
+const FAV_KEY = 'ktm890favs';
+let favs = JSON.parse(localStorage.getItem(FAV_KEY) || '[]');
+
+function toggleFav(btn) {
+  const tr = btn.closest('tr');
+  const comp = tr.querySelector('.comp').textContent.trim();
+  const idx = favs.indexOf(comp);
+  if (idx === -1) {
+    favs.push(comp); btn.textContent='★'; btn.classList.add('active'); tr.classList.add('favorited');
+  } else {
+    favs.splice(idx,1); btn.textContent='☆'; btn.classList.remove('active'); tr.classList.remove('favorited');
+  }
+  localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+  renderFavs();
+}
+
+function renderFavs() {
+  const list = document.getElementById('fav-list');
+  const empty = document.getElementById('fav-empty');
+  if (!favs.length) { empty.style.display=''; list.innerHTML=''; return; }
+  empty.style.display='none';
+  const rows = [...document.querySelectorAll('#view-moteur tbody tr, #view-chassis tbody tr')]
+    .filter(tr => { const c=tr.querySelector('.comp'); return c && favs.includes(c.textContent.trim()); });
+  list.innerHTML = '<div class="section"><div class="section-title">⭐ Vos favoris</div>' +
+    '<table><thead><tr><th></th><th>Composant</th><th>Filet</th><th>Couple</th><th>Remarques</th></tr></thead><tbody>' +
+    rows.map(tr=>tr.outerHTML).join('') + '</tbody></table></div>';
+  list.querySelectorAll('.fav-btn').forEach(b => { b.onclick = ()=>toggleFav(b); });
+}
+
+// Restore favs
+document.querySelectorAll('#view-moteur tbody tr, #view-chassis tbody tr').forEach(tr => {
+  const c = tr.querySelector('.comp');
+  if (c && favs.includes(c.textContent.trim())) {
+    tr.classList.add('favorited');
+    const b = tr.querySelector('.fav-btn');
+    if (b) { b.textContent='★'; b.classList.add('active'); }
+  }
+});
+renderFavs();
+
+// ── Recherche ─────────────────────────────────────────────────────────
+function doSearch(q) {
+  q = q.trim().toLowerCase();
+  if (!q) {
+    document.querySelectorAll('#view-moteur tbody tr, #view-chassis tbody tr').forEach(tr => {
+      tr.classList.remove('hidden'); clearHL(tr);
+    });
+    if (currentTab==='moteur') document.getElementById('view-chassis').style.display='none';
+    updateStats(); return;
+  }
+  // Show both moteur+chassis during search
+  document.getElementById('view-moteur').style.display='block';
+  document.getElementById('view-chassis').style.display='block';
+  ['moteur','chassis','suspension','maintenance','favs'].forEach(v => {
+    document.getElementById('tab-'+v).classList.remove('active');
+  });
+  let found=0;
+  document.querySelectorAll('#view-moteur tbody tr, #view-chassis tbody tr').forEach(tr => {
+    const match = tr.textContent.toLowerCase().includes(q);
+    tr.classList.toggle('hidden', !match);
+    if (match) { found++; applyHL(tr, q); } else clearHL(tr);
+  });
+  document.getElementById('stats-text').textContent = `${found} résultat(s) pour "${q}"`;
+}
+
+function applyHL(tr, q) {
+  tr.querySelectorAll('.comp,.thread,.torque').forEach(td => {
+    const orig = td.dataset.orig || td.textContent;
+    td.dataset.orig = orig;
+    td.innerHTML = orig.replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark>$1</mark>');
+  });
+}
+function clearHL(tr) {
+  tr.querySelectorAll('.comp,.thread,.torque').forEach(td => {
+    if (td.dataset.orig) td.textContent = td.dataset.orig;
+  });
+}
+
+// ── Onglets ───────────────────────────────────────────────────────────
+let currentTab = 'moteur';
+function switchTab(tab) {
+  document.getElementById('search').value = '';
+  document.querySelectorAll('#view-moteur tbody tr, #view-chassis tbody tr').forEach(tr => {
+    tr.classList.remove('hidden'); clearHL(tr);
+  });
+  currentTab = tab;
+  ['moteur','chassis','suspension','maintenance','favs','eclates'].forEach(v => {
+    const el = document.getElementById('view-'+v);
+    el.style.display = (v===tab) ? 'block' : 'none';
+    document.getElementById('tab-'+v).classList.toggle('active', v===tab);
+  });
+  // Cache légende et stats pour l'onglet éclatés
+  document.querySelector('.legende').style.display = (tab==='eclates') ? 'none' : '';
+  document.querySelector('.stats').style.display = (tab==='eclates') ? 'none' : '';
+  if (tab==='eclates' && !eclatesInited) { eclatesInited=true; initEclates(); }
+  updateStats();
+}
+
+function updateStats() {
+  const el = document.getElementById('stats-text');
+  if (currentTab==='moteur') {
+    el.textContent = document.querySelectorAll('#view-moteur tbody tr:not(.hidden)').length + ' valeurs — Moteur';
+  } else if (currentTab==='chassis') {
+    el.textContent = document.querySelectorAll('#view-chassis tbody tr:not(.hidden)').length + ' valeurs — Châssis';
+  } else { el.textContent = ''; }
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+
+// ── Éclatés ──────────────────────────────────────────────────────────
+let eclatesInited = false;
+const ECLATES = [{"name":"FRONT FORK, TRIPLE CLAMP","imgs":["eclates_img/page_06.png"],"parts":[{"pos":1,"name":"Gabel KTM 890 Adventure R Rally 2024","ref":"A610C155X403200","qty":1},{"pos":3,"name":"HH collar screw M8x25","ref":"0025080256","qty":4,"thread":"M8×25","torques":[{"comp":"Vis du té supérieur de fourche","val":"15 N·m","page":513},{"comp":"Vis té inférieur de fourche","val":"12 N·m","page":513}]},{"pos":4,"name":"HANDLEBAR CLAMP 28MM","ref":"7720103800030","qty":2},{"pos":5,"name":"AH-COLLAR SCREW M10X35 ISA45","ref":"0032100356S","qty":2,"thread":"M10×35"},{"pos":6,"name":"HANDLEBAR SUPPORT D=28 H=32 BL","ref":"5940103903230","qty":2},{"pos":7,"name":"Ignition lock cover","ref":"63501045010","qty":1},{"pos":8,"name":"Steering head screw M20x1,5 WS_27","ref":"54801036000C1","qty":1,"thread":"M20×1,5","torques":[{"comp":"Vis de la tête de direction","val":"18 N·m","page":514}]},{"pos":9,"name":"thrust wash DIN0988-25x35x0,5","ref":"0988253505","qty":1},{"pos":10,"name":"HH COLLAR SCREW M8X25 WS=10","ref":"0015080256S","qty":1,"thread":"M8×25","torques":[{"comp":"Vis du té supérieur de fourche","val":"15 N·m","page":513},{"comp":"Vis té inférieur de fourche","val":"12 N·m","page":513}]},{"pos":11,"name":"HH collar screw M8x30","ref":"0025080306","qty":4,"thread":"M8×30","torques":[{"comp":"Vis du té supérieur de fourche","val":"15 N·m","page":513},{"comp":"Vis té inférieur de fourche","val":"12 N·m","page":513}]},{"pos":12,"name":"Triple clamp top","ref":"63701034030C1","qty":1},{"pos":13,"name":"Stearing head gasket","ref":"69001084100","qty":2},{"pos":14,"name":"STEERINGHEAD KPL.17","ref":"69001181000","qty":2},{"pos":15,"name":"PROT. RING STEER. HEAD BEARING","ref":"69001086100","qty":1},{"pos":16,"name":"Bottom triple clamp cmpl.","ref":"63701032030C1","qty":1},{"pos":17,"name":"HH collar screw M8x35 TX40","ref":"0025080356","qty":4,"thread":"M8×35","torques":[{"comp":"Vis du té supérieur de fourche","val":"15 N·m","page":513},{"comp":"Vis té inférieur de fourche","val":"12 N·m","page":513}]},{"pos":18,"name":"Stearing head rep. Kit","ref":"69001181010","qty":1},{"pos":21,"name":"HH COLLAR SCREW M8X25 TX40","ref":"0025080256S","qty":3,"thread":"M8×25","torques":[{"comp":"Vis du té supérieur de fourche","val":"15 N·m","page":513},{"comp":"Vis té inférieur de fourche","val":"12 N·m","page":513}]},{"pos":22,"name":"Steering damper790 Adventure cpl.","ref":"16181S55E","qty":1},{"pos":23,"name":"Clamp brake hose","ref":"63501070000","qty":2},{"pos":24,"name":"SELF LOCKING NUT DIN0985-M 5","ref":"0985050003","qty":2},{"pos":25,"name":"HH collar screw M5x20 TX30","ref":"0025050206","qty":2,"thread":"M5×20","torques":[{"comp":"Vis protection de fourche","val":"5 N·m","page":511}]},{"pos":26,"name":"Ignition lock cover","ref":"63511066010","qty":1},{"pos":27,"name":"Fork protector right","ref":"63501093000C1C","qty":1},{"pos":28,"name":"Fork protector left","ref":"63501092000C1C","qty":1},{"pos":29,"name":"special screw M5x17","ref":"69008021060","qty":4,"thread":"M5×17","torques":[{"comp":"Vis protection de fourche","val":"5 N·m","page":511}]},{"pos":30,"name":"special screw M5x12","ref":"69008021160","qty":2,"thread":"M5×12","torques":[{"comp":"Vis protection de fourche","val":"5 N·m","page":511}]},{"pos":31,"name":"SIDE REFLECTOR YELLOW ''CEV''","ref":"60012080100","qty":2},{"pos":32,"name":"Fork protector kit","ref":"A61001994044","qty":1}]},{"name":"HANDLEBAR, CONTROLS","imgs":["eclates_img/page_07.png"],"parts":[{"pos":1,"name":"Handlebar","ref":"6070200100033","qty":1},{"pos":2,"name":"Clutch cable","ref":"63502090000","qty":1},{"pos":3,"name":"PVC clamp 6.4 MM Heyman","ref":"64132070000","qty":1},{"pos":4,"name":"HH collar screw M5x12 TX30","ref":"0025050126","qty":2,"thread":"M5×12"},{"pos":6,"name":"Grip tube (no heating)","ref":"60702012000","qty":1},{"pos":7,"name":"Ride-by-wire without throttle tube","ref":"60711012000","qty":1},{"pos":8,"name":"SCREW SET START-STOP SWITCH","ref":"76011073110","qty":1},{"pos":9,"name":"Start / emergency stop switch right","ref":"A61011074000","qty":1},{"pos":10,"name":"Screw set start-stop switch","ref":"61411174010","qty":1},{"pos":11,"name":"Combination switch","ref":"76011270200","qty":1},{"pos":12,"name":"Grip LHS w/o heater","ref":"60702039100","qty":1},{"pos":13,"name":"mirror, right","ref":"28512040000","qty":1},{"pos":14,"name":"mirror, left/right","ref":"58412040100","qty":1},{"pos":15,"name":"Clutch lever cmpl.","ref":"63502031000","qty":1},{"pos":16,"name":"Clamp cpl. incl. 2 screws","ref":"6350204400030","qty":1},{"pos":17,"name":"Clutch lever","ref":"63502040000","qty":1},{"pos":18,"name":"Kit lever pin","ref":"64102038000","qty":1},{"pos":19,"name":"Switch","ref":"63511049000","qty":1},{"pos":20,"name":"HANDGUARD CLOSED BLACK HIGH","ref":"6030217910030","qty":1},{"pos":236370210,"name":"HANDLEBAR, CONTROLS","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"FRAME","imgs":["eclates_img/page_08.png"],"parts":[{"pos":1,"name":"Frame 635TB","ref":"63503101100EB","qty":1},{"pos":2,"name":"Subframe right","ref":"63703102006C1","qty":1},{"pos":3,"name":"Subframe left","ref":"63703102005C1","qty":1},{"pos":4,"name":"Rear reinforcement","ref":"63508019050","qty":1},{"pos":5,"name":"Rear footpeg bracket left","ref":"6350304800033","qty":1},{"pos":6,"name":"Rear footpeg bracket right","ref":"6350304900033","qty":1},{"pos":7,"name":"Cross member, black","ref":"6350300200733","qty":1},{"pos":14,"name":"Engine strut black","ref":"6410301300033","qty":1},{"pos":15,"name":"Skid plate frame holder, right cmpl.","ref":"6350309019033","qty":1},{"pos":16,"name":"Skid plate frame holder, left cmpl.","ref":"6350309018033","qty":1},{"pos":17,"name":"mask carrier element right","ref":"A61008006000C1","qty":1},{"pos":18,"name":"mask carrier element left","ref":"A61008005000C1","qty":1},{"pos":19,"name":"Rear master cylinder protection","ref":"63513958044","qty":1},{"pos":20,"name":"Footpeg bracket front, right, cmpl.","ref":"63703039066C1","qty":1},{"pos":21,"name":"Footpeg bracket front, left, cmpl.","ref":"63703038066C1","qty":1},{"pos":22,"name":"Bushing 10,4x20x25","ref":"08000010025U0","qty":2},{"pos":23,"name":"SCREW M8X35 ISA45 SS","ref":"0035080356S","qty":2,"thread":"M8×35","torques":[{"comp":"Vis du support d'assemblage fixation moteur","val":"25 N·m","page":513},{"comp":"Vis du cadre de la protection moteur","val":"25 N·m","page":513}]},{"pos":24,"name":"SHCS M8x20 TX45","ref":"0035080206S","qty":6,"thread":"M8×20","torques":[{"comp":"Vis du support d'assemblage fixation moteur","val":"25 N·m","page":513},{"comp":"Vis du cadre de la protection moteur","val":"25 N·m","page":513}]},{"pos":25,"name":"HH Collar screw M6x13 TX30 SL","ref":"0024060136S","qty":4,"thread":"M6×13","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":511}]},{"pos":26,"name":"SHCS M10x20 TX45 MK","ref":"0035100209S","qty":2,"thread":"M10×20","torques":[{"comp":"Vis du support moteur","val":"45 N·m","page":514}]},{"pos":27,"name":"ISA screw M10x35 ISA45","ref":"0035100356S","qty":3,"thread":"M10×35","torques":[{"comp":"Vis du support moteur","val":"45 N·m","page":514}]},{"pos":28,"name":"Retain. brack., seat cowl pad front left","ref":"63503002093","qty":2},{"pos":29,"name":"Rubber seat cowl pad","ref":"63503002090","qty":2},{"pos":30,"name":"Hex collar screw M6x12 ISA30 self-lockin","ref":"0025060126S","qty":4,"thread":"M6×12","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":511}]},{"pos":31,"name":"HH collar screw M6x20 TX30","ref":"0025060206S","qty":2,"thread":"M6×20","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":511}]},{"pos":32,"name":"CONTACT WASHER M6 VSV-K6","ref":"58411098100","qty":2,"thread":"M6","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":511}]},{"pos":33,"name":"ISA screw M10x45 ISA45","ref":"0035100456S","qty":2,"thread":"M10×45","torques":[{"comp":"Vis du support moteur","val":"45 N·m","page":514}]},{"pos":34,"name":"ISA collar screw M10x40 ISA45","ref":"0035100409S","qty":4,"thread":"M10×40","torques":[{"comp":"Vis du support moteur","val":"45 N·m","page":514}]},{"pos":35,"name":"HH collar screw M8x16 TX40 SL","ref":"0025080166S","qty":4,"thread":"M8×16","torques":[{"comp":"Vis du support d'assemblage fixation moteur","val":"25 N·m","page":513},{"comp":"Vis du cadre de la protection moteur","val":"25 N·m","page":513}]},{"pos":37,"name":"AH-COLLAR SCREW M10X60 ISA45","ref":"0035100609S","qty":1,"thread":"M10×60","torques":[{"comp":"Vis du support moteur","val":"45 N·m","page":514}]},{"pos":39,"name":"HH COLLAR SCREW M8X16 TX40","ref":"0025080166","qty":1,"thread":"M8×16","torques":[{"comp":"Vis du support d'assemblage fixation moteur","val":"25 N·m","page":513},{"comp":"Vis du cadre de la protection moteur","val":"25 N·m","page":513}]},{"pos":40,"name":"HH collar screw M6x25 TX30","ref":"0025060256","qty":2,"thread":"M6×25","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":511}]},{"pos":41,"name":"SELF LOCKING NUT M8 10.9","ref":"54310086200","qty":1,"thread":"M8","torques":[{"comp":"Vis du support d'assemblage fixation moteur","val":"25 N·m","page":513},{"comp":"Vis du cadre de la protection moteur","val":"25 N·m","page":513}]},{"pos":42,"name":"screw ISO 14579-M8x30-10.9-MK black","ref":"014579080301S","qty":1,"thread":"M8×30","torques":[{"comp":"Vis du support d'assemblage fixation moteur","val":"25 N·m","page":513},{"comp":"Vis du cadre de la protection moteur","val":"25 N·m","page":513}]},{"pos":43,"name":"CYL. SCREW DIN14579 M8X50 SS","ref":"014579080506S","qty":2,"thread":"M8×50","torques":[{"comp":"Vis du support d'assemblage fixation moteur","val":"25 N·m","page":513},{"comp":"Vis du cadre de la protection moteur","val":"25 N·m","page":513}]},{"pos":45,"name":"FOOTPEG INSERT CPL.","ref":"76203940044","qty":1},{"pos":46,"name":"HH collar screw M6x16 TX30 SL","ref":"0025060166S","qty":6,"thread":"M6×16","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":511}]},{"pos":47,"name":"Sprocket Cover","ref":"A61003096000","qty":1}]},{"name":"Section 9","imgs":["eclates_img/page_09.png"],"parts":[{"pos":48,"name":"AH-COLLAR SCREW M8X35 ISA45","ref":"0035080356","qty":2,"thread":"M8×35","torques":[{"comp":"Vis du support d'assemblage fixation moteur","val":"25 N·m","page":513}]},{"pos":49,"name":"washer DIN 125 A -8.4","ref":"0125080003","qty":2},{"pos":50,"name":"RUBBER SEAT-CONTACT SURFACE","ref":"60307048000","qty":2},{"pos":51,"name":"PIN FOR FOOT PED 51.5X9.8 MM","ref":"54803044000","qty":2},{"pos":52,"name":"FOOTREST RIGHT RALLY 07","ref":"76203041250","qty":1},{"pos":53,"name":"FOOTREST LEFT RALLY 07","ref":"76203040250","qty":1},{"pos":54,"name":"FOOTREST SPRING L/S & R/S","ref":"54603041000","qty":2},{"pos":55,"name":"washer DIN 125 A 10.5","ref":"0125100003","qty":2},{"pos":56,"name":"PIN DIN0094-3,2X25 STEEL","ref":"0094032253","qty":2},{"pos":57,"name":"clip nut M6","ref":"54603048100","qty":6,"thread":"M6"},{"pos":58,"name":"RANGE CHANGE METAL NUT M5 INOX","ref":"54603048600","qty":2,"thread":"M5"},{"pos":59,"name":"RANGE CHANGE METAL NUT M8","ref":"54603048000","qty":2,"thread":"M8","torques":[{"comp":"Vis du support d'assemblage fixation moteur","val":"25 N·m","page":513}]},{"pos":60,"name":"special screw M5x12","ref":"69008021160","qty":3,"thread":"M5×12"},{"pos":62,"name":"ISA screw, M10x65 ISA45","ref":"0035100656S","qty":1,"thread":"M10×65","torques":[{"comp":"Vis du support moteur","val":"45 N·m","page":514}]},{"pos":63,"name":"Frame locking cap","ref":"64103088000","qty":2},{"pos":64,"name":"CLOSING PANEL FRONT L/S R/S 03","ref":"60003044010","qty":2},{"pos":65,"name":"SELF LOCKING NUT DIN0985-M 5","ref":"0985050003","qty":2},{"pos":66,"name":"SELF LOCKING NUT M10 CU WS=14","ref":"54310086100","qty":2,"thread":"M10","torques":[{"comp":"Vis du support moteur","val":"45 N·m","page":514}]},{"pos":67,"name":"BUSHING 8.4X12X21.5","ref":"61407049000","qty":2}]},{"name":"ENGINE GUARD","imgs":["eclates_img/page_10.png"],"parts":[{"pos":1,"name":"Skid plate","ref":"A6100309000001","qty":1},{"pos":2,"name":"Fuel tank protector right","ref":"A61007925020","qty":1},{"pos":3,"name":"Fuel tank protector left","ref":"A61007925010","qty":1},{"pos":4,"name":"Front skid plate linkage","ref":"6350309005033","qty":1},{"pos":5,"name":"Lower Alu Skidplate Support","ref":"63503090016","qty":1},{"pos":6,"name":"HH COLLAR SCREW M6X10 TX30","ref":"0024060106","qty":7,"thread":"M6×10","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":512}]},{"pos":7,"name":"HH collar screw M6x8 TX30","ref":"0025060086","qty":2,"thread":"M6×8","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":512}]},{"pos":8,"name":"Collar screw M8x40 ISA40 SS","ref":"0025080406S","qty":2,"thread":"M8×40","torques":[{"comp":"Vis du cadre de la protection moteur","val":"25 N·m","page":513}]},{"pos":10,"name":"COLLAR BUSH 6,5X9X18X8,5","ref":"61342041000","qty":6},{"pos":11,"name":"DAMP. COMPONENT ABS MODUL","ref":"62142041000","qty":6},{"pos":12,"name":"SEAT RUBBER 10 MM","ref":"75007046010","qty":2},{"pos":13,"name":"Silent block 20x12 M6x10/M6x8","ref":"63503190017","qty":2,"thread":"M6×10","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":512}]},{"pos":14,"name":"special screw M6x12x3","ref":"83008000012","qty":2,"thread":"M6×12","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":512}]},{"pos":15,"name":"TANK RUBBER","ref":"60307020000","qty":2},{"pos":16,"name":"RANGE CHANGE METAL NUT M6 INOX","ref":"54603048300","qty":6,"thread":"M6","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":512}]},{"pos":17,"name":"Collar screw M6x22-8.8 ISA30","ref":"69014117000","qty":6,"thread":"M6×22","torques":[{"comp":"Vis de la tôle de fixation de la protection moteur","val":"10 N·m","page":512}]},{"pos":236370330,"name":"ENGINE GUARD","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"SIDE / CENTER STAND","imgs":["eclates_img/page_11.png"],"parts":[{"pos":1,"name":"Side stand Rally black","ref":"63503223000C1","qty":1},{"pos":2,"name":"SPRING L=116 MM 05","ref":"61003024000","qty":1},{"pos":3,"name":"SCREW FOR SIDE STAND M10X31,2","ref":"62503027200","qty":1,"thread":"M10×31,2","torques":[{"comp":"Vis de la béquille latérale","val":"40 N·m","page":514}]},{"pos":4,"name":"Special screw side stand spring","ref":"63503028010","qty":1},{"pos":5,"name":"Lens head screw ISO 7380-M5X20A2","ref":"0738050202","qty":2,"thread":"M5×20"},{"pos":6,"name":"Side stand bracket","ref":"63503126100C1","qty":1},{"pos":7,"name":"SWITCH SIDE STAND","ref":"93511045000","qty":1},{"pos":8,"name":"Racket side-stand-cable","ref":"64103001099","qty":1},{"pos":9,"name":"INT. TORX OVAL HEAD M 5X10 8.8","ref":"0018050103","qty":2},{"pos":10,"name":"SHCS M10x30 TX45","ref":"0035100309S","qty":2,"thread":"M10×30","torques":[{"comp":"Vis de la béquille latérale","val":"40 N·m","page":514}]},{"pos":11,"name":"Main stand console right","ref":"63503016040C1","qty":1},{"pos":12,"name":"MAGNET HOLDER","ref":"90103029000","qty":1},{"pos":13,"name":"Stand plate large","ref":"63503923150","qty":1},{"pos":206350360,"name":"SIDE / CENTER STAND","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"SHOCK ABSORBER","imgs":["eclates_img/page_12.png"],"parts":[{"pos":1,"name":"Shock abs. KTM 890 Advent. R Rally 2024","ref":"A610C455X305200","qty":1},{"pos":2,"name":"HH COLLAR SCREW M12X50 TX45","ref":"0025120506S","qty":2,"thread":"M12×50","torques":[{"comp":"Vis amortisseur en bas","val":"80 N·m","page":514},{"comp":"Vis amortisseur en haut","val":"80 N·m","page":514}]},{"pos":3,"name":"Splash protection shock absorber","ref":"63508075000","qty":1},{"pos":4,"name":"special screw M5x12","ref":"69008021160","qty":1,"thread":"M5×12"}]},{"name":"SWING ARM","imgs":["eclates_img/page_13.png"],"parts":[{"pos":1,"name":"Swingarm cpml. Black","ref":"6350403004433","qty":1},{"pos":2,"name":"HH COLLAR NUT M10X1,25 WS=13","ref":"58414030000","qty":2,"thread":"M10×1,25"},{"pos":3,"name":"screw M10x1.25x50 WS10","ref":"50304040100","qty":2,"thread":"M10×1,25"},{"pos":4,"name":"HH collar screw M5x12 TX30","ref":"0025050126","qty":2,"thread":"M5×12"},{"pos":5,"name":"Clamp","ref":"60104142000","qty":2},{"pos":6,"name":"special screw M5x12","ref":"69008021160","qty":2,"thread":"M5×12"},{"pos":7,"name":"BUSH FOR CHAINSLIDER GUARD 02","ref":"46104066050","qty":2},{"pos":8,"name":"chain slide protection","ref":"64104066000","qty":1},{"pos":9,"name":"BUCKET F. SHAFT SEAL RING 03","ref":"54804034000","qty":4},{"pos":10,"name":"radial shaft seal 25x32x7","ref":"0760253270","qty":4},{"pos":11,"name":"NEEDLEBEAR HK2212V 22/28/12 MB","ref":"0618222812","qty":4},{"pos":12,"name":"BEARING SLEEVE 17X22X38,7 03","ref":"59404032000","qty":2},{"pos":13,"name":"STOP DISK 22,2X31,7X1","ref":"54603036000","qty":2},{"pos":14,"name":"Bushing Shock Mounting","ref":"64104030020","qty":1},{"pos":15,"name":"swing arm bolt","ref":"64104037000","qty":1},{"pos":16,"name":"SPECIAL SCREW M12X40 SW19","ref":"76504038000","qty":2,"thread":"M12×40","torques":[{"comp":"Vis de l'axe du bras oscillant","val":"100 N·m","page":514}]},{"pos":17,"name":"HH collar screw M6x12 TX30","ref":"0025060126","qty":2,"thread":"M6×12"},{"pos":18,"name":"Retaining bracket, chain guide","ref":"63504030010","qty":1},{"pos":19,"name":"hex nut DIN 934 M6","ref":"0934060003","qty":1,"thread":"M6"},{"pos":20,"name":"HH collar screw M6x20 TX30","ref":"0025060206","qty":1,"thread":"M6×20"},{"pos":21,"name":"HH COLLAR SCREW M6X45 TX30","ref":"0025060456","qty":1,"thread":"M6×45"},{"pos":22,"name":"CHAIN GUIDE CPL.","ref":"78004070100","qty":1},{"pos":23,"name":"special screw M5x12","ref":"69008021160","qty":2,"thread":"M5×12"},{"pos":24,"name":"Chainguard","ref":"63504061000","qty":1},{"pos":25,"name":"Bushing 5,5x8,3x9","ref":"64104050010","qty":2},{"pos":26,"name":"HH collar screw M5x20 TX30","ref":"0025050206","qty":2,"thread":"M5×20"},{"pos":27,"name":"splash protection swingarm","ref":"63504050000","qty":1},{"pos":99,"name":"SWING ARM REPAIR KIT SX-F","ref":"79004030010","qty":1},{"pos":196350490,"name":"SWING ARM","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"EXHAUST SYSTEM","imgs":["eclates_img/page_14.png"],"parts":[{"pos":1,"name":"Silencer","ref":"63505183000","qty":1},{"pos":2,"name":"BUSHING 8,5X11X29","ref":"61305069000","qty":2},{"pos":4,"name":"RANGE CHANGE METAL NUT M5 INOX","ref":"54603048600","qty":1,"thread":"M5"},{"pos":5,"name":"Shape disc Alu","ref":"60405069000","qty":1},{"pos":6,"name":"COUN.-SUNK SCREW M8X50 ISA10.9","ref":"0019080506","qty":1,"thread":"M8×50","torques":[{"comp":"Vis du pré-silencieux avant sur le cadre","val":"15 N·m","page":513},{"comp":"Vis de la fixation du silencieux arrière","val":"15 N·m","page":513}]},{"pos":7,"name":"Heat protection black cmpl.","ref":"63505111000C1","qty":1},{"pos":8,"name":"DAMPING ELEMENT SILICON","ref":"27005011011","qty":2},{"pos":9,"name":"SCREW TORX M5X10","ref":"78105081010","qty":1,"thread":"M5×10"},{"pos":11,"name":"Manifold gasket","ref":"69005105005","qty":2},{"pos":12,"name":"Exhaust clamp tube 50 mm","ref":"63605058100","qty":2},{"pos":13,"name":"Premuffler","ref":"A61005050000","qty":1},{"pos":14,"name":"HH COLLAR SCREW M8X35 TX40","ref":"0025080356S","qty":2,"thread":"M8×35","torques":[{"comp":"Vis du pré-silencieux avant sur le cadre","val":"15 N·m","page":513},{"comp":"Vis de la fixation du silencieux arrière","val":"15 N·m","page":513}]},{"pos":15,"name":"collar bushing 8.5x12x23.5x10","ref":"58405050065","qty":4},{"pos":16,"name":"damp. component silicone grey","ref":"54305068100","qty":3},{"pos":17,"name":"Manifold","ref":"63605007000","qty":1},{"pos":18,"name":"self-locking nut M8 Cu","ref":"51010086100","qty":4,"thread":"M8","torques":[{"comp":"Vis du pré-silencieux avant sur le cadre","val":"15 N·m","page":513},{"comp":"Vis de la fixation du silencieux arrière","val":"15 N·m","page":513}]},{"pos":20,"name":"Exhaust gasket","ref":"64105005000","qty":2},{"pos":21,"name":"stud screw 835 M8x25 - 10.9","ref":"63505015000","qty":4,"thread":"M8×25","torques":[{"comp":"Vis du pré-silencieux avant sur le cadre","val":"15 N·m","page":513},{"comp":"Vis de la fixation du silencieux arrière","val":"15 N·m","page":513}]},{"pos":23,"name":"Oxygen sensor","ref":"A60741090000","qty":1},{"pos":24,"name":"O2 Sensor LSF 4","ref":"63541090000","qty":1},{"pos":25,"name":"O2 Sensor LSF 4","ref":"63541190000","qty":1},{"pos":26,"name":"Collar bushing, 8.5x12x23.5x11.5","ref":"0800000901200","qty":2},{"pos":27,"name":"RANGE CHANGE METAL NUT M8","ref":"54603048000","qty":3,"thread":"M8","torques":[{"comp":"Vis du pré-silencieux avant sur le cadre","val":"15 N·m","page":513},{"comp":"Vis de la fixation du silencieux arrière","val":"15 N·m","page":513}]},{"pos":28,"name":"HH COLLAR SCREW M8X35 TX40","ref":"0025080356S","qty":1,"thread":"M8×35","torques":[{"comp":"Vis du pré-silencieux avant sur le cadre","val":"15 N·m","page":513},{"comp":"Vis de la fixation du silencieux arrière","val":"15 N·m","page":513}]}]},{"name":"AIR FILTER","imgs":["eclates_img/page_15.png"],"parts":[{"pos":1,"name":"Intake duct, right","ref":"63506041000","qty":1},{"pos":2,"name":"Intake duct, left","ref":"63506040000","qty":1},{"pos":3,"name":"Intake port gasket right","ref":"63506040150","qty":1},{"pos":4,"name":"Intake port gasket left","ref":"63506041150","qty":1},{"pos":5,"name":"Special screw M5x12","ref":"69008121160","qty":2,"thread":"M5×12"},{"pos":6,"name":"Air filter box cover","ref":"63506002100","qty":1},{"pos":9,"name":"Air filter box","ref":"63506001200","qty":1},{"pos":10,"name":"EJOT PT screw K50x12","ref":"0081050121","qty":1},{"pos":11,"name":"Cable bracket air filter box","ref":"63506002160","qty":1},{"pos":12,"name":"VARIABLE ONE-EAR CLAMP 19,8MM","ref":"00050198706","qty":2},{"pos":13,"name":"Pre-formed hose engine breather","ref":"63530087000","qty":1},{"pos":15,"name":"rubber grommet","ref":"76006014000","qty":2},{"pos":16,"name":"Rubber grommet slotted","ref":"50206020200","qty":1},{"pos":17,"name":"Intake channel","ref":"63506026100","qty":2},{"pos":18,"name":"HOSE CLAMP GEMI 58MM","ref":"77236048000","qty":2},{"pos":19,"name":"Filter clamp frame","ref":"63506116000","qty":1},{"pos":20,"name":"Air filter","ref":"A61006015000","qty":1},{"pos":21,"name":"Filter clamp wedge","ref":"63506117000","qty":1},{"pos":236370610,"name":"AIR FILTER","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"TANK, SEAT","imgs":["eclates_img/page_16.png"],"parts":[{"pos":2,"name":"Seat","ref":"63507941000C1A","qty":1},{"pos":4,"name":"fuel tank","ref":"63507613000EB1","qty":1},{"pos":5,"name":"Fuel tank fairing","ref":"63507058000","qty":1},{"pos":6,"name":"SHCS DIN 912 M5x8","ref":"0912050083","qty":3,"thread":"M5×8"},{"pos":7,"name":"AH SCREW DIN0912-M 5X30","ref":"0912050303","qty":3},{"pos":8,"name":"Fuel tank filler neck","ref":"A61007108050","qty":1},{"pos":9,"name":"Fuel lever sensor","ref":"63507080200","qty":1},{"pos":10,"name":"AH SCREW DIN0912-M 5X16","ref":"0912050163","qty":4},{"pos":11,"name":"FUEL COCK CPL.","ref":"58507003200","qty":2},{"pos":12,"name":"HH collar screw M6x12 TX30","ref":"0025060126","qty":4,"thread":"M6×12","torques":[{"comp":"Vis de la fixation de selle","val":"6 N·m","page":511},{"comp":"Vis de serrure de selle","val":"10 N·m","page":511}]},{"pos":13,"name":"CLAMP YDNAC 10128 12MM","ref":"58031005000","qty":2},{"pos":14,"name":"Interconnection hose","ref":"63507016000","qty":1},{"pos":15,"name":"Tank overflow hose 718mm","ref":"63515027100","qty":1},{"pos":16,"name":"collar bushing, front tank holder","ref":"61007065000","qty":8},{"pos":18,"name":"Bearing sleeve, external","ref":"6100716000001","qty":4},{"pos":19,"name":"SHCS DIN 912 M8x40","ref":"0912080403","qty":4,"thread":"M8×40","torques":[{"comp":"Vis de la fixation de selle","val":"25 N·m","page":513}]},{"pos":20,"name":"gasket tank insert","ref":"21007008151","qty":1},{"pos":21,"name":"GASKET FUEL LEVEL SENSOR","ref":"60307080090","qty":1},{"pos":23,"name":"Motorex Fuel Stabilizer 125ml","ref":"00001000015","qty":1},{"pos":24,"name":"Cover fuel pump","ref":"63507087010","qty":1},{"pos":25,"name":"Seat screw M6x11.5 ISA30","ref":"0900000601200","qty":2,"thread":"M6×11,5","torques":[{"comp":"Vis de la fixation de selle","val":"6 N·m","page":511},{"comp":"Vis de serrure de selle","val":"10 N·m","page":511}]},{"pos":236370711,"name":"TANK, SEAT","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"FUEL PUMP","imgs":["eclates_img/page_17.png"],"parts":[{"pos":1,"name":"fuel pump","ref":"63507088000","qty":1},{"pos":2,"name":"Sealing","ref":"64107189000","qty":1},{"pos":3,"name":"HYDRAULIC CONNECTOR CPL.","ref":"75007092000","qty":1},{"pos":4,"name":"HH collar screw M6x20 TX30","ref":"0025060206","qty":5,"thread":"M6×20","torques":[{"comp":"Vis pompe à essence","val":"6 N·m","page":512}]},{"pos":5,"name":"VARIABLE ONE-EAR CLAMP 15,7MM","ref":"00050157706","qty":2},{"pos":6,"name":"Fuel hose","ref":"63507017000","qty":1},{"pos":7,"name":"ELBOW CONNECTOR","ref":"76007028000","qty":1},{"pos":8,"name":"Hex collar screw M5x12 ISA30 SS","ref":"0025050126S","qty":1,"thread":"M5×12"},{"pos":9,"name":"CLAMP RSGU 15/12","ref":"49007439000","qty":1},{"pos":99,"name":"filter kit","ref":"63507090000","qty":1},{"pos":196350730,"name":"FUEL PUMP","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"MASK, FENDERS","imgs":["eclates_img/page_18.png"],"parts":[{"pos":1,"name":"Windshield R","ref":"A61008108000","qty":1},{"pos":2,"name":"Mask spoiler right","ref":"A61008004000C1","qty":1},{"pos":3,"name":"Mask spoiler left","ref":"A61008003000C1","qty":1},{"pos":7,"name":"Headlightmask centerpart","ref":"A61014012000","qty":1},{"pos":10,"name":"Cover mask support","ref":"A61014012020","qty":1},{"pos":11,"name":"Mask support right","ref":"A61014011000","qty":1},{"pos":12,"name":"Mask support left","ref":"A61014010000","qty":1},{"pos":13,"name":"Mask support foam","ref":"A61014010050","qty":1},{"pos":15,"name":"Fender, front","ref":"63508910000AB","qty":1},{"pos":16,"name":"HH collar screw M6x16 TX30","ref":"0025060166","qty":4,"thread":"M6×16","torques":[{"comp":"Vis restantes sur la partie-cycle","val":"10 N·m","page":511}]},{"pos":19,"name":"Lower rear panel","ref":"63508019000","qty":1},{"pos":20,"name":"Tail section","ref":"63508013000AB","qty":1},{"pos":21,"name":"License plate holder support, upper part","ref":"63508015000","qty":1},{"pos":22,"name":"License plate holder support, lower bott","ref":"63508016000","qty":1},{"pos":23,"name":"Brace subframe","ref":"63503002030","qty":1},{"pos":24,"name":"wheel spindle mask support","ref":"63514010040","qty":1},{"pos":25,"name":"Special screw M5x14","ref":"60708008071","qty":8,"thread":"M5×14","torques":[{"comp":"Vis du support d'instruments","val":"5 N·m","page":511}]},{"pos":26,"name":"rubber bush windshield fixation","ref":"60708008070","qty":6},{"pos":27,"name":"special screw M5x12","ref":"69008021160","qty":11,"thread":"M5×12","torques":[{"comp":"Vis du support d'instruments","val":"5 N·m","page":511}]},{"pos":29,"name":"SPECIAL SCREW M6X18 ISA30 08","ref":"69014017000","qty":8,"thread":"M6×18","torques":[{"comp":"Vis restantes sur la partie-cycle","val":"10 N·m","page":511}]},{"pos":30,"name":"BUSHING 6,1X9,2X7,5 08","ref":"69014014000","qty":4},{"pos":31,"name":"rubber grommet 9x11x16x8.5 mm","ref":"60006001022","qty":4},{"pos":32,"name":"bushing chain protection","ref":"69004060150","qty":2},{"pos":33,"name":"RANGE CHANGE METAL NUT M5 INOX","ref":"54603048600","qty":4,"thread":"M5","torques":[{"comp":"Vis du support d'instruments","val":"5 N·m","page":511}]},{"pos":34,"name":"Bump rubber","ref":"21008064010","qty":2},{"pos":36,"name":"clip nut M5","ref":"69008021080","qty":4,"thread":"M5","torques":[{"comp":"Vis du support d'instruments","val":"5 N·m","page":511}]},{"pos":38,"name":"HH collar screw M5x10 TX30","ref":"0025050106","qty":2,"thread":"M5×10","torques":[{"comp":"Vis du support d'instruments","val":"5 N·m","page":511}]},{"pos":39,"name":"RANGE CHANGE METAL NUT M5","ref":"54603048200","qty":2,"thread":"M5","torques":[{"comp":"Vis du support d'instruments","val":"5 N·m","page":511}]},{"pos":40,"name":"EJOT PT screw K50x12","ref":"0081050121","qty":2},{"pos":41,"name":"HH collar screw M6x16 TX30","ref":"0025060166","qty":4,"thread":"M6×16","torques":[{"comp":"Vis restantes sur la partie-cycle","val":"10 N·m","page":511}]},{"pos":42,"name":"Passenger grip right","ref":"63512009000","qty":1},{"pos":43,"name":"Passenger grip left","ref":"63512008000","qty":1},{"pos":44,"name":"BAGGAGE CARRIER BRIDGE","ref":"6061201000030","qty":1},{"pos":45,"name":"ISA collar screw M8x40 ISA45","ref":"0035080406S","qty":4,"thread":"M8×40"},{"pos":46,"name":"WASHER REAR-UT D=14MM","ref":"75008023000","qty":4},{"pos":47,"name":"HH collar screw M6x16 TX30 SL","ref":"0025060166S","qty":4,"thread":"M6×16","torques":[{"comp":"Vis restantes sur la partie-cycle","val":"10 N·m","page":511}]},{"pos":48,"name":"Bracket for reflector","ref":"64112181100","qty":1},{"pos":49,"name":"Rear reflector red","ref":"58412080400","qty":1},{"pos":236370812,"name":"MASK, FENDERS","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"SIDE TRIM","imgs":["eclates_img/page_19.png"],"parts":[{"pos":1,"name":"Side fairing right","ref":"63508042000ABH","qty":1},{"pos":2,"name":"Side fairing left","ref":"63508041000ABH","qty":1},{"pos":3,"name":"storage box right","ref":"63508042050","qty":1},{"pos":4,"name":"storage box left","ref":"63508041050","qty":1},{"pos":5,"name":"Closing rubber","ref":"63508041055","qty":2},{"pos":6,"name":"Socket sliding seat","ref":"63508040120","qty":2},{"pos":8,"name":"quick release rubber grommet","ref":"47106003160","qty":4},{"pos":9,"name":"Battery cover","ref":"63711054010","qty":1},{"pos":10,"name":"Fuel tank spoiler right","ref":"A61008051000EBB","qty":1},{"pos":11,"name":"Fuel tank spoiler left","ref":"A61008050000EBB","qty":1},{"pos":12,"name":"Inner cover right","ref":"A61008027000","qty":1},{"pos":13,"name":"Inner cover left","ref":"A61008026000","qty":1},{"pos":14,"name":"Plug cap","ref":"A61008027010","qty":1},{"pos":15,"name":"Fuel tank spoiler inner right","ref":"A61008024000C1","qty":1},{"pos":16,"name":"Fuel tank spoiler inner left","ref":"A61008023000C1","qty":1},{"pos":17,"name":"Gummitülle d 22.5/5/2","ref":"64106001025","qty":2},{"pos":18,"name":"clip nut M6","ref":"54603048100","qty":2,"thread":"M6","torques":[{"comp":"Raccord vissé du cache du réservoir de carburant","val":"8 N·m","page":511}]},{"pos":19,"name":"HH collar screw M6x20 TX30","ref":"0024060206","qty":2,"thread":"M6×20","torques":[{"comp":"Raccord vissé du cache du réservoir de carburant","val":"8 N·m","page":511}]},{"pos":20,"name":"special screw M5x12","ref":"69008021160","qty":22,"thread":"M5×12"},{"pos":21,"name":"special screw M6x12x3","ref":"83008000012","qty":2,"thread":"M6×12","torques":[{"comp":"Raccord vissé du cache du réservoir de carburant","val":"8 N·m","page":511}]},{"pos":22,"name":"HH collar screw M6x20 TX30","ref":"0025060206","qty":2,"thread":"M6×20","torques":[{"comp":"Raccord vissé du cache du réservoir de carburant","val":"8 N·m","page":511}]},{"pos":23,"name":"SCREW FOR PLASTIC K50X18 T20","ref":"0081050181","qty":2},{"pos":24,"name":"RANGE CHANGE METAL NUT M5 INOX","ref":"54603048600","qty":7,"thread":"M5"},{"pos":25,"name":"Bracket for side fairing","ref":"61908040030","qty":2},{"pos":26,"name":"RUBBER BUFFER","ref":"54308042000","qty":2},{"pos":236370820,"name":"SIDE TRIM","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"FRONT WHEEL","imgs":["eclates_img/page_20.png"],"parts":[{"pos":1,"name":"Front wheel cmpl. 2,15x21\" black","ref":"63509101044C1","qty":1},{"pos":2,"name":"front wheel hub cpl.","ref":"60309010244C1","qty":1},{"pos":3,"name":"BUSHING SPACER TUBE FRONT","ref":"60309011000","qty":1},{"pos":4,"name":"GR.BALL BEAR.6906 DDU2CG23S6NM","ref":"0625069068","qty":2},{"pos":5,"name":"CIRCLIP DIN0472-47X1,75","ref":"0472047175","qty":1},{"pos":6,"name":"SHAFT SEAL RING 35X47X7 TC","ref":"0760354771","qty":2},{"pos":7,"name":"SPACER BUSH. FRONT WHEEL L/S","ref":"60309012100","qty":1},{"pos":8,"name":"SPACER BUSH. FR. WHEEL R/S 03","ref":"60009013000","qty":1},{"pos":9,"name":"Rim, front, 2.15x21\" black","ref":"63509170000C1","qty":1},{"pos":10,"name":"Spoke, M5 / 3.9 x 225.4","ref":"60709071225","qty":36,"thread":"M5"},{"pos":11,"name":"Spoke nipple Quadrax M5","ref":"60310072200","qty":36,"thread":"M5"},{"pos":12,"name":"Valve cap Schrader","ref":"81210076020","qty":1},{"pos":13,"name":"Valve insert Schrader","ref":"81210076010","qty":1},{"pos":14,"name":"Valve body cmpl.","ref":"60309276000","qty":1},{"pos":15,"name":"RIM BAND 21''","ref":"50309073000","qty":1},{"pos":16,"name":"GASKET RUBBER 2.5''X21''","ref":"60309177000","qty":1},{"pos":17,"name":"Wheel spindle, front","ref":"60309081100","qty":1},{"pos":18,"name":"STEERING HEAD SCREW 09","ref":"6900103600001","qty":1},{"pos":19,"name":"SENSOR GEAR ABS","ref":"60342020000","qty":1},{"pos":20,"name":"BRAKE DISC FRONT D=320","ref":"63509060000","qty":2},{"pos":21,"name":"SPECIAL SCREW M6X19 WS=8 10.9","ref":"59009062019","qty":12,"thread":"M6×19","torques":[{"comp":"Vis du disque de frein avant","val":"14 N·m","page":512}]},{"pos":98,"name":"FRONT WHEEL REP. KIT ADV. 1050","ref":"60609015000","qty":1},{"pos":236370910,"name":"FRONT WHEEL","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"REAR WHEEL","imgs":["eclates_img/page_21.png"],"parts":[{"pos":1,"name":"Rear wheel cmpl. 4x18\" black","ref":"63510101044C1","qty":1},{"pos":2,"name":"Rear hub cmpl.","ref":"60310010244C1","qty":1},{"pos":3,"name":"BEAR. SPACERTUBE L=124,8MM 03","ref":"60010011000","qty":1},{"pos":4,"name":"GR.BALL BEAR. 6205-2RSHC3HMTF7","ref":"0625062052","qty":2},{"pos":5,"name":"CIRCLIP DIN0472-52X2","ref":"0472052200","qty":1},{"pos":6,"name":"SHAFT SEAL RING 30X52X7","ref":"0760305271","qty":1},{"pos":7,"name":"SPACER BUSHING REAR WHEEL R/S","ref":"60310013000","qty":1},{"pos":8,"name":"SPACER RING 03","ref":"60010015000","qty":1},{"pos":9,"name":"Rim, rear, 4x18\" black","ref":"63510170000C1","qty":1},{"pos":10,"name":"Spoke M5/4,00x199,5","ref":"60710071199","qty":18,"thread":"M5"},{"pos":11,"name":"Spoke M5/4,00x212,3","ref":"60710071212","qty":18,"thread":"M5"},{"pos":12,"name":"Spoke nipple Quadrax M5","ref":"60310072200","qty":36,"thread":"M5"},{"pos":13,"name":"Rimstape 18\"","ref":"60710073000","qty":1},{"pos":14,"name":"GASKET RUBBER 4.5''X18''","ref":"60310177100","qty":1},{"pos":16,"name":"SPECIAL SCREW M6X19 WS=8 10.9","ref":"59009062019","qty":6,"thread":"M6×19","torques":[{"comp":"Vis disque de frein arrière","val":"14 N·m","page":512}]},{"pos":17,"name":"SENSOR GEAR ABS REAR","ref":"60142021100","qty":1},{"pos":18,"name":"Brake disc rear","ref":"63510060100","qty":1},{"pos":19,"name":"RUBBER DAMPING BLOCK '91","ref":"54610459000","qty":6},{"pos":20,"name":"hex nut EN 1661 M8 WS13","ref":"06923080003","qty":6,"thread":"M8","torques":[{"comp":"Écrou pour vis de couronne","val":"35 N·m","page":513}]},{"pos":21,"name":"Sprocket wheel carrier cpl. Black","ref":"7501005004433","qty":1},{"pos":22,"name":"SPACER BUSH. SPR. SUPP. IN. 06","ref":"60110014000","qty":1},{"pos":23,"name":"BALL BEARING 6006 DDU2CG23S6NM","ref":"0625060060","qty":2},{"pos":24,"name":"NILOS RING 6006AV","ref":"60110016000","qty":1},{"pos":25,"name":"SPACER BUSH. SPROCKET SUPP. 06","ref":"60110012000","qty":1},{"pos":26,"name":"Supersprox-Stealth rear sprocket","ref":"5841005104504","qty":1},{"pos":27,"name":"COUNTER-SUNK SCREW ISA45 M8X26","ref":"0019080266S","qty":6,"thread":"M8×26","torques":[{"comp":"Écrou pour vis de couronne","val":"35 N·m","page":513}]},{"pos":28,"name":"Rear axel cpl.","ref":"69010181044","qty":1},{"pos":29,"name":"CHAIN TENSIONER R/S LC8 03","ref":"60010084000","qty":1},{"pos":30,"name":"COLLAR NUT M25X1,5 WS=32 05","ref":"61010086000","qty":1,"thread":"M25×1,5","torques":[{"comp":"Écrou axe arrière","val":"90 N·m","page":514}]},{"pos":31,"name":"chain DID 118 roll","ref":"76910065118","qty":1},{"pos":32,"name":"Rivet link chain DID 520 VP2-T","ref":"76910066000","qty":1},{"pos":33,"name":"chain X-Ring 118 links with chain guide","ref":"63510067118","qty":1},{"pos":34,"name":"Valve cap Schrader","ref":"81210076020","qty":1},{"pos":35,"name":"Valve insert Schrader","ref":"81210076010","qty":1},{"pos":36,"name":"Valve body cmpl.","ref":"60309276000","qty":1},{"pos":98,"name":"Drive set 16/45","ref":"00050002100","qty":1},{"pos":99,"name":"REAR WHEEL REP. KIT ADV 13-14","ref":"60310015000","qty":1}]},{"name":"WIRING HARNESS","imgs":["eclates_img/page_22.png"],"parts":[{"pos":1,"name":"Main wiring harness","ref":"A61011475000","qty":1},{"pos":2,"name":"Engine wiring harness","ref":"63711085000","qty":1},{"pos":3,"name":"Cover flap, starter relay","ref":"64111058110","qty":1},{"pos":4,"name":"STARTER RELAY 07","ref":"76211058000","qty":1},{"pos":5,"name":"RUBBER CABLE TIE 75MM 03","ref":"60011093075","qty":1},{"pos":5,"name":"RUBBER CABLE TIE 45MM 03","ref":"60011093045","qty":1},{"pos":6,"name":"BAR SPACER 4/7 BLACK","ref":"60111094100","qty":2},{"pos":7,"name":"RELAY CM1A-R-12V-H80 07","ref":"61111057000","qty":5,"thread":"M1"},{"pos":8,"name":"CABLE TIE 300/4,8MM BLACK","ref":"44011076305","qty":1},{"pos":8,"name":"CABLE TIE 140/2,5MM BLACK","ref":"44011076140","qty":1},{"pos":8,"name":"CABLE TIE 200/3,6MM BLACK","ref":"44011076200","qty":1},{"pos":9,"name":"FUSE 30 A","ref":"58011109130","qty":1},{"pos":10,"name":"TEMPERATURE SENSOR","ref":"61111018100","qty":1},{"pos":11,"name":"Cable holder, attachable","ref":"64111059020","qty":1},{"pos":12,"name":"DC HORN 12V","ref":"76011060100","qty":1},{"pos":13,"name":"CCU control unit support","ref":"A61011083000","qty":1},{"pos":14,"name":"Front connector support","ref":"A61011083050","qty":1},{"pos":15,"name":"SCREW M5X14 TORX 25 07","ref":"58605083014","qty":2,"thread":"M5×14"},{"pos":16,"name":"VOLTAGE REGULATOR","ref":"60311034000","qty":1},{"pos":17,"name":"HH collar screw M6x20 TX30","ref":"0024060206","qty":2,"thread":"M6×20","torques":[{"comp":"Vis du capteur de vitesse","val":"6 N·m","page":512},{"comp":"Vis du régulateur de tension","val":"4 N·m","page":512}]},{"pos":18,"name":"FLASHER UNIT LED 6,25W","ref":"76011030000","qty":1},{"pos":19,"name":"Power socket 12V","ref":"60711042000","qty":1},{"pos":20,"name":"Lid 12V-socket","ref":"60311042050","qty":1},{"pos":21,"name":"Cable tie flexible 7x260","ref":"0330000726000","qty":1},{"pos":22,"name":"CABLE SUPPORT KHS NR.150-47610","ref":"58111076000","qty":1},{"pos":23,"name":"Connectivity unit","ref":"79114086100","qty":1},{"pos":24,"name":"Rubber support, CCU","ref":"79114086050","qty":1},{"pos":25,"name":"CCU control unit support","ref":"A61011047050","qty":1}]},{"name":"BATTERY","imgs":["eclates_img/page_23.png"],"parts":[{"pos":1,"name":"Electrics bracket front","ref":"63508025110","qty":1},{"pos":2,"name":"clip nut M6","ref":"54603048100","qty":2,"thread":"M6","torques":[{"comp":"Vis du support de batterie","val":"4,5 N·m","page":512},{"comp":"Vis pôle de batterie","val":"4,5 N·m","page":512}]},{"pos":3,"name":"special screw M6x12x3","ref":"83008000012","qty":3,"thread":"M6×12","torques":[{"comp":"Vis du support de batterie","val":"4,5 N·m","page":512},{"comp":"Vis pôle de batterie","val":"4,5 N·m","page":512}]},{"pos":4,"name":"Range change metal nut M6","ref":"93008082010","qty":2,"thread":"M6","torques":[{"comp":"Vis du support de batterie","val":"4,5 N·m","page":512},{"comp":"Vis pôle de batterie","val":"4,5 N·m","page":512}]},{"pos":5,"name":"Seat bushing","ref":"63507040070","qty":2},{"pos":6,"name":"Count.snk screw M6x20 TX30","ref":"014581060201","qty":2,"thread":"M6×20","torques":[{"comp":"Vis du support de batterie","val":"4,5 N·m","page":512},{"comp":"Vis pôle de batterie","val":"4,5 N·m","page":512}]},{"pos":7,"name":"rubber battery holder","ref":"63511053050","qty":1},{"pos":8,"name":"Ground wire","ref":"63511097000","qty":1},{"pos":9,"name":"Starter cable","ref":"63511059000","qty":1},{"pos":10,"name":"battery cable","ref":"63511059050","qty":1},{"pos":11,"name":"HH collar screw M6x16 TX30","ref":"0025060166","qty":2,"thread":"M6×16","torques":[{"comp":"Vis du support de batterie","val":"4,5 N·m","page":512},{"comp":"Vis pôle de batterie","val":"4,5 N·m","page":512}]},{"pos":12,"name":"battery HTZ12A-BS(DA)","ref":"64111053000","qty":1},{"pos":13,"name":"COVER POSITIVE POLE","ref":"62111059060","qty":1},{"pos":14,"name":"Foam rubber 33x132","ref":"63508055010","qty":1},{"pos":15,"name":"Clamping bracket","ref":"63508055000","qty":1},{"pos":16,"name":"mass cable starter-frame","ref":"64111096000","qty":1},{"pos":17,"name":"SELF LOCK. NUT DIN0985-M 6","ref":"0985060003","qty":1},{"pos":216371130,"name":"BATTERY","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"FRONT BRAKE CONTROL","imgs":["eclates_img/page_24.png"],"parts":[{"pos":1,"name":"Front master cylinder cmpl.","ref":"63713101033","qty":1},{"pos":2,"name":"Brake lever","ref":"63513002044","qty":1},{"pos":3,"name":"Lever bolt cpl.","ref":"64113006000","qty":1},{"pos":4,"name":"Piston assembly","ref":"63713008000","qty":1},{"pos":5,"name":"Reservoir cap cpl.","ref":"64113031100","qty":1},{"pos":6,"name":"mirror clamp incl. 2 screws","ref":"6351300500030","qty":1},{"pos":7,"name":"Brake line MC-ABS","ref":"63542001000","qty":1},{"pos":8,"name":"banjo bolt M10x1x19.5","ref":"62113020100","qty":1,"thread":"M10×1","torques":[{"comp":"Vis creuse durite de frein","val":"25 N·m","page":514}]},{"pos":9,"name":"sealing ring DIN 7603 10x14x1","ref":"0603100141","qty":2},{"pos":196351310,"name":"FRONT BRAKE CONTROL","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"REAR BRAKE CONTROL","imgs":["eclates_img/page_25.png"],"parts":[{"pos":1,"name":"Reservoir assembly","ref":"64113069000","qty":1},{"pos":2,"name":"SCREW F. EXPANSION TANK","ref":"69013099050","qty":1},{"pos":3,"name":"Brake line holder","ref":"64113026000","qty":1},{"pos":4,"name":"Bracket ABS line dia7.5","ref":"64142046000","qty":1},{"pos":5,"name":"YDNAC CLAMP 10101 (10,4MM)","ref":"58007017000","qty":2},{"pos":6,"name":"HOSE FOR RESERVOIR 6X1,5","ref":"69013069001","qty":1},{"pos":8,"name":"Foot master cylinder cpl. black","ref":"6411306000030","qty":1},{"pos":9,"name":"Piston assembly","ref":"64113061000","qty":1},{"pos":10,"name":"HH collar screw M6x25 TX30","ref":"0025060256","qty":2,"thread":"M6×25","torques":[{"comp":"Vis du cylindre de frein arrière","val":"10 N·m","page":512},{"comp":"Écrou de réglage de la pédale de frein arrière","val":"6 N·m","page":511}]},{"pos":11,"name":"Foot brake lever cpl. without push rod","ref":"63513050033C1","qty":1},{"pos":12,"name":"Footbrake lever step plate","ref":"63513051000","qty":1},{"pos":13,"name":"CS screw, ISO14581-M5x16-A2-070 ISA25","ref":"014581050162","qty":2,"thread":"M5×16"},{"pos":14,"name":"HH collar screw M6x20 TX30","ref":"0025060206","qty":1,"thread":"M6×20","torques":[{"comp":"Vis du cylindre de frein arrière","val":"10 N·m","page":512},{"comp":"Écrou de réglage de la pédale de frein arrière","val":"6 N·m","page":511}]},{"pos":15,"name":"hex nut DIN 934 M6","ref":"0934060003","qty":2,"thread":"M6","torques":[{"comp":"Vis du cylindre de frein arrière","val":"10 N·m","page":512},{"comp":"Écrou de réglage de la pédale de frein arrière","val":"6 N·m","page":511}]},{"pos":16,"name":"GROOVED BALL BEAR. 608 2RS C3","ref":"0625006087","qty":2},{"pos":17,"name":"SWIVEL HEAD M6 FOOT BRAKE LEV.","ref":"54603069000","qty":1,"thread":"M6","torques":[{"comp":"Vis du cylindre de frein arrière","val":"10 N·m","page":512},{"comp":"Écrou de réglage de la pédale de frein arrière","val":"6 N·m","page":511}]},{"pos":19,"name":"PRESSURE ROD ALU 250 '90","ref":"54603068000","qty":1},{"pos":20,"name":"Oval head screw ISR M6x20-A2-70-MK","ref":"0738060205S","qty":1,"thread":"M6×20","torques":[{"comp":"Vis du cylindre de frein arrière","val":"10 N·m","page":512},{"comp":"Écrou de réglage de la pédale de frein arrière","val":"6 N·m","page":511}]},{"pos":21,"name":"Return spring for brake lever","ref":"54603062200","qty":1},{"pos":22,"name":"SELF LOCKING NUT M8 10.9","ref":"54310086200","qty":1,"thread":"M8","torques":[{"comp":"Raccord vissé de la pédale de frein arrière","val":"25 N·m","page":513}]},{"pos":23,"name":"screw ISO 14579-M8x30-10.9-MK black","ref":"014579080301S","qty":1,"thread":"M8×30","torques":[{"comp":"Raccord vissé de la pédale de frein arrière","val":"25 N·m","page":513}]},{"pos":24,"name":"banjo bolt M10x1x19.5","ref":"62113020100","qty":1,"thread":"M10×1","torques":[{"comp":"Vis creuse durite de frein","val":"25 N·m","page":514}]},{"pos":25,"name":"sealing ring DIN 7603 10x14x1","ref":"0603100141","qty":2},{"pos":26,"name":"Brake line, rear master cylinder","ref":"63742002000","qty":1},{"pos":27,"name":"Rear master cylinder guard","ref":"A61003039051","qty":1}]},{"name":"FRONT BRAKE CALIPER","imgs":["eclates_img/page_26.png"],"parts":[{"pos":1,"name":"Brake caliper, front left","ref":"63713115000","qty":1},{"pos":2,"name":"Brake caliper, front right","ref":"63713116000","qty":1},{"pos":3,"name":"Front brake pad","ref":"63713030000","qty":2},{"pos":4,"name":"Piston set","ref":"63513019000","qty":2},{"pos":5,"name":"Seal set","ref":"63613021000","qty":2},{"pos":6,"name":"Retaining spring set","ref":"64113017000","qty":2},{"pos":7,"name":"sealing ring DIN 7603 10x14x1","ref":"0603100141","qty":4},{"pos":8,"name":"BLEEDER SCREW CPL. 05","ref":"62513020000","qty":2},{"pos":9,"name":"AH-COLLAR SCREW M10X1,25X55SS","ref":"0035100559S","qty":4,"thread":"M10×1,25","torques":[{"comp":"Vis de l'étrier de frein avant","val":"45 N·m","page":514}]},{"pos":10,"name":"Brake line, front brake caliper","ref":"63542203000","qty":1},{"pos":11,"name":"HH collar screw M5x10 TX30","ref":"0025050106","qty":1,"thread":"M5×10"},{"pos":12,"name":"HH collar screw M5x16 TX30","ref":"0025050166","qty":1,"thread":"M5×16"},{"pos":13,"name":"SUPPORT FOR BRAKE HOSE M5","ref":"60113146000","qty":1,"thread":"M5"},{"pos":14,"name":"SELF LOCKING NUT DIN0985-M 5","ref":"0985050003","qty":1},{"pos":216371360,"name":"FRONT BRAKE CALIPER","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"REAR BRAKE CALIPER","imgs":["eclates_img/page_27.png"],"parts":[{"pos":1,"name":"Rear brake caliper","ref":"63713080000","qty":1},{"pos":2,"name":"rear holder","ref":"63513075000","qty":1},{"pos":3,"name":"Cup set","ref":"64113084000","qty":1},{"pos":4,"name":"brake piston set","ref":"63713083000","qty":1},{"pos":5,"name":"Seal set","ref":"63513081000","qty":1},{"pos":6,"name":"Bleeder + cap","ref":"64113020000","qty":1},{"pos":7,"name":"rear brake pads","ref":"63713090000","qty":1},{"pos":8,"name":"Pad pin and spring","ref":"63513085000","qty":1},{"pos":9,"name":"sealing ring DIN 7603 10x14x1","ref":"0603100141","qty":2},{"pos":10,"name":"Brake line, rear brake caliper","ref":"63742004000","qty":1},{"pos":11,"name":"banjo bolt M10x1x19.5","ref":"62113020100","qty":1,"thread":"M10×1","torques":[{"comp":"Vis creuse durite de frein","val":"25 N·m","page":514}]},{"pos":196351390,"name":"REAR BRAKE CALIPER","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"LIGHTING SYSTEM","imgs":["eclates_img/page_28.png"],"parts":[{"pos":1,"name":"Headlight","ref":"A61014001000","qty":1},{"pos":2,"name":"special screw M6x18-8.8 ISA30 MK","ref":"69014017000S","qty":4,"thread":"M6×18","torques":[{"comp":"Vis du capteur de vitesse de rotation de la roue avant","val":"6 N·m","page":512}]},{"pos":3,"name":"BUSHING 6,1X9,2X7,5 08","ref":"69014014000","qty":4},{"pos":4,"name":"rubber grommet 9x11x16x8.5 mm","ref":"60006001022","qty":7},{"pos":5,"name":"turn signal front left/rear right","ref":"60314025000","qty":2},{"pos":6,"name":"turn signal front right/rear left","ref":"60314026000","qty":2},{"pos":7,"name":"WASHER 18x10,5x1,6","ref":"0433100003","qty":4},{"pos":8,"name":"LOCK WASHER DIN6797-J10,5 ZI","ref":"0797100003","qty":4},{"pos":9,"name":"HH COLLAR NUT M10X1,25 WS=13","ref":"58414030000","qty":4,"thread":"M10×1,25"},{"pos":11,"name":"EJOT DELTA PT SCREW 45X12-Z","ref":"0081645121","qty":3},{"pos":12,"name":"Tail light","ref":"63514040000","qty":1},{"pos":236371411,"name":"LIGHTING SYSTEM","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"INSTRUMENTS / LOCK SYSTEM","imgs":["eclates_img/page_29.png"],"parts":[{"pos":1,"name":"Lock kit","ref":"A61011066044","qty":1},{"pos":2,"name":"Seat lever assy","ref":"63507050000","qty":1},{"pos":3,"name":"KTM ignition key","ref":"64111067000","qty":1},{"pos":3,"name":"Blank Key KTM","ref":"64111067010","qty":1},{"pos":4,"name":"SEAT LOCK","ref":"90107050050","qty":1},{"pos":5,"name":"Tear-off screw M6 ignition lock ISA30 MK","ref":"76011064200","qty":2,"thread":"M6"},{"pos":6,"name":"Oval head screw ISR M6x20-A2-70-MK","ref":"0738060205S","qty":2,"thread":"M6×20"},{"pos":7,"name":"Combination instrument","ref":"22114069000","qty":1},{"pos":8,"name":"USB power socket 12 V","ref":"64111043000","qty":1},{"pos":9,"name":"Absorber Speedometer","ref":"61614069010","qty":4},{"pos":10,"name":"Oval head screw ISR M5x8-08.8","ref":"073802050083","qty":4,"thread":"M5×8","torques":[{"comp":"Vis du support d'instruments","val":"5 N·m","page":511}]},{"pos":11,"name":"special screw M5x17","ref":"69008021060","qty":2,"thread":"M5×17","torques":[{"comp":"Vis du support d'instruments","val":"5 N·m","page":511}]},{"pos":12,"name":"Bushing, speedometer attachment","ref":"61914010020","qty":1},{"pos":13,"name":"special screw M5x12","ref":"69008021160","qty":1,"thread":"M5×12","torques":[{"comp":"Vis du support d'instruments","val":"5 N·m","page":511}]},{"pos":15,"name":"Dashboard support","ref":"A61014060000","qty":1},{"pos":16,"name":"Lock cover","ref":"63507050050","qty":1},{"pos":18,"name":"Cable Bracket Lock","ref":"64107051000","qty":1},{"pos":19,"name":"SCREW FOR PLASTIC K45X12 T20","ref":"0081045121","qty":1},{"pos":20,"name":"special screw M5x12","ref":"69008021160","qty":1,"thread":"M5×12","torques":[{"comp":"Vis du support d'instruments","val":"5 N·m","page":511}]},{"pos":236371430,"name":"INSTRUMENTS / LOCK SYSTEM","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"EVAPORATIVE CANISTER","imgs":["eclates_img/page_30.png"],"parts":[{"pos":1,"name":"CARBON CANISTER","ref":"75015001200","qty":1},{"pos":2,"name":"Purge valve","ref":"A62415015000","qty":1},{"pos":3,"name":"Retain. bracket evap. canis. valve cmpl.","ref":"A61015126015","qty":1},{"pos":4,"name":"Hose clip ACF","ref":"63515003010","qty":1},{"pos":5,"name":"Retaining bracket ACF","ref":"6351500201033","qty":1},{"pos":6,"name":"Pre-formed hose, evap. can., bleeder","ref":"A61015021000","qty":1},{"pos":7,"name":"HOSE EPA D=10/16 L=2000MM","ref":"78015119000","qty":1},{"pos":8,"name":"Fuel tank vent hose 688mm","ref":"63515024100","qty":1},{"pos":9,"name":"HOSE CONNECTION STRAIGHT","ref":"69015019010","qty":1},{"pos":10,"name":"HOSE EPA D=6/10 L=2000MM","ref":"78015019000","qty":1},{"pos":11,"name":"Evaporative canister hose - purge valve","ref":"63515028100","qty":1},{"pos":12,"name":"HOSE EPA D=6/10 L=2000MM","ref":"78015019000","qty":1},{"pos":13,"name":"HOSE EPA D=4/8 L=2000MM","ref":"78015021000","qty":2},{"pos":14,"name":"Hose connection nozzles","ref":"64115026000","qty":1},{"pos":15,"name":"HOSE PURGE VALVE","ref":"61415021000","qty":1},{"pos":16,"name":"Y-CONNECTOR YS 6-10-6","ref":"61315028100","qty":1},{"pos":18,"name":"clip nut M6","ref":"54603048100","qty":2,"thread":"M6"},{"pos":19,"name":"HH collar screw M6x13 TX30","ref":"0024060136","qty":2,"thread":"M6×13"},{"pos":20,"name":"YDNAC-CLAMP 10173 (16MM) '98","ref":"58431082100","qty":1},{"pos":21,"name":"Screw plug ACF","ref":"61315026100","qty":1},{"pos":22,"name":"Angle piece for overrun","ref":"63503098030","qty":1},{"pos":23,"name":"HH COLLAR SCREW M6X25 TX30","ref":"0024060256","qty":1,"thread":"M6×25"},{"pos":24,"name":"HH collar screw M6x16 TX30","ref":"0025060166","qty":1,"thread":"M6×16"},{"pos":25,"name":"DUMPER 40 SHORE","ref":"62142041100","qty":2},{"pos":26,"name":"Collar bushing 6,5x9x18x8,5","ref":"61342041100","qty":2},{"pos":27,"name":"HH collar screw M6x20 TX30","ref":"0024060206S","qty":2,"thread":"M6×20"}]},{"name":"SEPERATE ENCLOSURE","imgs":["eclates_img/page_31.png"],"parts":[{"pos":0,"name":"mirror, left/right","ref":"58412040100","qty":1},{"pos":0,"name":"mirror, right","ref":"28512040000","qty":1},{"pos":0,"name":"HH collar screw M6x8 TX30","ref":"0025060086","qty":2,"thread":"M6×8"},{"pos":0,"name":"Skid plate","ref":"A6100309000001","qty":1},{"pos":0,"name":"Lower Alu Skidplate Support","ref":"63503090016","qty":1},{"pos":0,"name":"HH COLLAR SCREW M6X10 TX30","ref":"0024060106","qty":7,"thread":"M6×10"},{"pos":0,"name":"Fuel tank protector left","ref":"A61007925010","qty":1},{"pos":0,"name":"special screw M6x12x3","ref":"83008000012","qty":2,"thread":"M6×12"},{"pos":0,"name":"TANK RUBBER","ref":"60307020000","qty":2},{"pos":0,"name":"DAMP. COMPONENT ABS MODUL","ref":"62142041000","qty":6},{"pos":0,"name":"Fuel tank protector right","ref":"A61007925020","qty":1},{"pos":0,"name":"WASHER REAR-UT D=14MM","ref":"75008023000","qty":4},{"pos":0,"name":"Collar screw M6x22-8.8 ISA30","ref":"69014117000","qty":6,"thread":"M6×22"},{"pos":0,"name":"RANGE CHANGE METAL NUT M6 INOX","ref":"54603048300","qty":6,"thread":"M6"},{"pos":0,"name":"Collar bushing 6,5x9x18x8,5","ref":"61342041100","qty":6},{"pos":0,"name":"Stand plate large","ref":"63503923150","qty":1},{"pos":0,"name":"Windshield R","ref":"A61008108000","qty":1},{"pos":0,"name":"FOOTPEG INSERT CPL.","ref":"76203940044","qty":1},{"pos":0,"name":"rubber bush windshield fixation","ref":"60708008070","qty":6},{"pos":0,"name":"Special screw M5x14","ref":"60708008071","qty":6,"thread":"M5×14"},{"pos":0,"name":"Rear reflector red","ref":"58412080400","qty":1},{"pos":0,"name":"Bracket for reflector","ref":"64112181100","qty":1},{"pos":0,"name":"SEAT RUBBER 10 MM","ref":"75007046010","qty":2},{"pos":0,"name":"HANDSCHUTZ LI. KPL. M. BEFEST.","ref":"6030218004430","qty":1},{"pos":0,"name":"HANDSCHUTZ RE. KPL. M. BEFEST.","ref":"6030218104430","qty":1},{"pos":0,"name":"PRINT LABEL 60X51 MM","ref":"00063004202","qty":1},{"pos":0,"name":"Akrapovic #Slip-on Line#","ref":"63505979100","qty":1},{"pos":0,"name":"Skid plate cover, complete","ref":"63503991044","qty":1},{"pos":0,"name":"Socket wrench WAF35","ref":"T14028","qty":1},{"pos":0,"name":"COMPRESSION ADJUSTER TOOL","ref":"T14069","qty":1},{"pos":0,"name":"HEADLIGHT MASK BOX","ref":"00063004012","qty":1},{"pos":0,"name":"950 ADV. CARTON F WIND PROT.","ref":"00063004105","qty":1},{"pos":0,"name":"HH Collar Screw M5x16 ISA30 SS","ref":"0025050166S","qty":4,"thread":"M5×16"},{"pos":0,"name":"RUBBER 14X6.5X2.3MM","ref":"60408061050","qty":2},{"pos":1,"name":"Owner´s manual ADVENTURE R '24","ref":"3214932EN","qty":1},{"pos":29,"name":"Tool set","ref":"63729099000","qty":1},{"pos":31,"name":"RING WRENCH 32MM","ref":"60012060032","qty":1},{"pos":32,"name":"GRIP FOR RING WRENCH","ref":"60012060000","qty":1},{"pos":196352000,"name":"SEPERATE ENCLOSURE","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"Section 32","imgs":["eclates_img/page_32.png"],"parts":[{"pos":33,"name":"HOOK WRENCH F. SHOCK ABSORBER","ref":"76029062000","qty":1},{"pos":35,"name":"T-WRENCH WS=6/8/10 '97","ref":"50329070000","qty":1},{"pos":196352000,"name":"SEPERATE ENCLOSURE","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"ABS","imgs":["eclates_img/page_33.png"],"parts":[{"pos":1,"name":"ABS module filled","ref":"A61042031044","qty":1},{"pos":2,"name":"ABS modulator bracket","ref":"63542040200","qty":1},{"pos":3,"name":"SPECIAL SCREW M6X12,5 WS=8","ref":"59001092050","qty":2,"thread":"M6×12,5","torques":[{"comp":"Vis du module ABS","val":"8 N·m","page":512}]},{"pos":4,"name":"COLLAR BUSH 6,5X9X18X8,5","ref":"61342041000","qty":6},{"pos":5,"name":"special screw M6x18-8.8 ISA30 MK","ref":"69014017000S","qty":6,"thread":"M6×18","torques":[{"comp":"Vis du module ABS","val":"8 N·m","page":512}]},{"pos":6,"name":"Brake line, front brake caliper","ref":"63542203000","qty":1},{"pos":7,"name":"HH collar screw M5x10 TX30","ref":"0025050106","qty":1,"thread":"M5×10"},{"pos":8,"name":"BAR SPACER 4/7 BLACK","ref":"60111094100","qty":8},{"pos":9,"name":"BLEEDER SCREW CPL. 05","ref":"62513020000","qty":2},{"pos":10,"name":"sealing ring DIN 7603 10x14x1","ref":"0603100141","qty":18},{"pos":11,"name":"banjo bolt M10x1x19.5","ref":"62113020100","qty":5,"thread":"M10×1"},{"pos":12,"name":"DUMPER 40 SHORE","ref":"62142041100","qty":4},{"pos":13,"name":"ABS-SENSOR","ref":"76042125000","qty":2},{"pos":14,"name":"SHCS ISO 14580 M6x16","ref":"014580060166","qty":2,"thread":"M6×16","torques":[{"comp":"Vis du module ABS","val":"8 N·m","page":512}]},{"pos":15,"name":"Brake line MC-ABS","ref":"63542001000","qty":1},{"pos":16,"name":"Brake light switch","ref":"64111051100","qty":1},{"pos":17,"name":"SPECIAL SCREW M6X15X3","ref":"83008000015","qty":2,"thread":"M6×15","torques":[{"comp":"Vis du module ABS","val":"8 N·m","page":512}]},{"pos":18,"name":"Brake line MC-ABS","ref":"63542002000","qty":1},{"pos":19,"name":"BRAKE LIGHT SWITCH REAR","ref":"62111051000","qty":1},{"pos":20,"name":"Brake links ABS-Caliper","ref":"63542004000","qty":1},{"pos":21,"name":"CABLE SUPPORT 10/4MM 2014","ref":"54813026100","qty":1},{"pos":22,"name":"Bracket ABS line dia7.5","ref":"64142046000","qty":2},{"pos":23,"name":"Angle sensor","ref":"61542090000","qty":1},{"pos":24,"name":"Retaining bracket angle sensor cmpl.","ref":"63742090015","qty":1},{"pos":26,"name":"HH collar screw M5x16 TX30","ref":"0025050166","qty":1,"thread":"M5×16"},{"pos":27,"name":"SUPPORT FOR BRAKE HOSE M5","ref":"60113146000","qty":1,"thread":"M5"},{"pos":28,"name":"SELF LOCKING NUT DIN0985-M 5","ref":"0985050003","qty":1},{"pos":29,"name":"COVER SENSOR BOX","ref":"61342090050","qty":1},{"pos":30,"name":"Heat protection","ref":"A61042040010","qty":1},{"pos":31,"name":"PLUG FOR M8","ref":"61103165000","qty":2,"thread":"M8"},{"pos":236374210,"name":"ABS","ref":"890 ADVENTURE R RALLY 2024 2024","qty":1}]},{"name":"TECHNIC INFORMATION STICKER","imgs":["eclates_img/page_34.png"],"parts":[{"pos":1,"name":"Sticker \"WARNING LABEL 3\"","ref":"50203098003","qty":1},{"pos":2,"name":"STICKER ''OWNERS MANUAL''","ref":"50307098000","qty":1},{"pos":3,"name":"Fuse box sticker","ref":"A61007096000","qty":1},{"pos":4,"name":"Type label, EURO 4 KTM","ref":"LI21-637-2B","qty":1},{"pos":5,"name":"Sticker ECE","ref":"63703095100","qty":1},{"pos":6,"name":"Sticker fuel labelling","ref":"21007098000","qty":1},{"pos":7,"name":"\"Sticker \"\"EAC\"\"\"","ref":"21003094000","qty":1},{"pos":8,"name":"Technical information sticker","ref":"A61003097200","qty":1},{"pos":9,"name":"LABEL M+S V-LIMIT 07","ref":"63003596000","qty":1},{"pos":10,"name":"Sticker chain tension","ref":"64104099100","qty":1},{"pos":11,"name":"Type label, Australia KTM","ref":"LI21-637-3","qty":1},{"pos":12,"name":"STD setting sticker","ref":"A61006098200","qty":1}]}];
+let eZoom = 1, ePanX = 0, ePanY = 0;
+
+function initEclates() {
+  const bar = document.getElementById('eclates-sec-bar');
+  ECLATES.forEach((sec, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'eclates-sec-btn' + (i===0 ? ' active' : '');
+    btn.textContent = sec.name.replace(', ', ' · ');
+    btn.onclick = () => renderEclate(i);
+    bar.appendChild(btn);
+  });
+  renderEclate(0);
+  initViewerGestures();
+  // Délégation pour les boutons ☆ dans la liste de pièces
+  document.getElementById('eclates-parts-list').addEventListener('click', e => {
+    const btn = e.target.closest('.eclates-fav-btn');
+    if (!btn) return;
+    toggleFavEclate(btn, btn.dataset.comp);
+  });
+}
+
+function renderEclate(idx) {
+  eZoom = 1; ePanX = 0; ePanY = 0;
+  const sec = ECLATES[idx];
+  document.querySelectorAll('.eclates-sec-btn').forEach((b,i) => b.classList.toggle('active', i===idx));
+  const img = document.getElementById('eclates-img');
+  img.src = sec.imgs[0];
+  img.style.transform = 'scale(1) translate(0px,0px)';
+  document.getElementById('eclates-zoom-level').textContent = '1×';
+  const withT = sec.parts.filter(p => p.torques && p.torques.length).length;
+  const hdr = document.getElementById('eclates-parts-title');
+  hdr.innerHTML = `<span>${sec.name}</span><span>${sec.parts.length} pièces · <span style="color:#f0a040">${withT} couples</span></span>`;
+  document.getElementById('eclates-parts-list').innerHTML = sec.parts.map(p => {
+    const hasTorque = p.torques && p.torques.length > 0;
+    const torqueHTML = hasTorque ? `<div class="eclates-torques">${p.torques.map(t => {
+      const isFav = favs.includes(t.comp);
+      const safeComp = t.comp.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+      const pdfLink = t.page ? `Manuel%20d%27atelier%202024%20890%20ADVENTURE%20R%20RALLY%20-.pdf#page=${t.page}` : null;
+      return `<div class="eclates-torque">
+        <span>${t.comp}</span>
+        <span class="eclates-torque-right">
+          <span class="eclates-torque-val">${t.val}</span>
+          ${pdfLink ? `<a href="${pdfLink}" target="_blank" class="eclates-manual-btn" title="Vérifier dans le manuel atelier (p.${t.page})">📖</a>` : ''}
+          <button class="eclates-fav-btn${isFav?' active':''}" data-comp="${safeComp}">${isFav?'★':'☆'}</button>
+        </span>
+      </div>`;
+    }).join('')}</div>` : '';
+    const sub = [p.ref, p.thread, `qté ${p.qty}`].filter(Boolean).join(' · ');
+    return `<div class="eclates-part${hasTorque?' has-t':''}">
+      <div class="eclates-pos">${p.pos}</div>
+      <div class="eclates-body">
+        <div class="eclates-pname">${p.name}</div>
+        <div class="eclates-psub">${sub}</div>
+        ${torqueHTML}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleFavEclate(btn, comp) {
+  const idx = favs.indexOf(comp);
+  const adding = idx === -1;
+  if (adding) { favs.push(comp); } else { favs.splice(idx, 1); }
+  btn.textContent = adding ? '★' : '☆';
+  btn.classList.toggle('active', adding);
+  // Synchronise les étoiles dans les tableaux moteur/chassis
+  document.querySelectorAll('#view-moteur tbody tr, #view-chassis tbody tr').forEach(tr => {
+    const c = tr.querySelector('.comp');
+    if (!c || c.textContent.trim() !== comp) return;
+    tr.classList.toggle('favorited', adding);
+    const b = tr.querySelector('.fav-btn');
+    if (b) { b.textContent = adding ? '★' : '☆'; b.classList.toggle('active', adding); }
+  });
+  // Synchronise les autres boutons ☆ pour le même couple dans les éclatés
+  document.querySelectorAll(`.eclates-fav-btn[data-comp="${comp.replace(/"/g,'&quot;')}"]`).forEach(b => {
+    if (b !== btn) { b.textContent = adding ? '★' : '☆'; b.classList.toggle('active', adding); }
+  });
+  localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+  renderFavs();
+}
+
+function eclateApply() {
+  const img = document.getElementById('eclates-img');
+  img.style.transform = `scale(${eZoom}) translate(${ePanX}px,${ePanY}px)`;
+  document.getElementById('eclates-zoom-level').textContent = eZoom.toFixed(1)+'×';
+}
+function eclateClampPan() {
+  const v = document.getElementById('eclates-viewer');
+  const mx = Math.max(0,((eZoom-1)*v.offsetWidth)/2/eZoom);
+  const my = Math.max(0,((eZoom-1)*v.offsetHeight)/2/eZoom);
+  ePanX = Math.max(-mx,Math.min(mx,ePanX));
+  ePanY = Math.max(-my,Math.min(my,ePanY));
+}
+function eclateZoomBy(factor) {
+  eZoom = Math.max(1,Math.min(6,eZoom*factor));
+  eclateClampPan(); eclateApply();
+}
+function eclateZoomReset() {
+  eZoom=1; ePanX=0; ePanY=0; eclateApply();
+}
+
+function initViewerGestures() {
+  const viewer = document.getElementById('eclates-viewer');
+  let activeP={}, lastDist=0, lastTap=0, startPX=0, startPY=0, startX=0, startY=0;
+  viewer.addEventListener('pointerdown', e => {
+    if (e.target.closest('.eclates-zoom-btn')) return;
+    e.preventDefault();
+    viewer.setPointerCapture(e.pointerId);
+    activeP[e.pointerId]={x:e.clientX,y:e.clientY};
+    const keys=Object.keys(activeP);
+    if(keys.length===1){
+      startX=e.clientX; startY=e.clientY; startPX=ePanX; startPY=ePanY;
+      const now=Date.now();
+      if(now-lastTap<280){ eZoom=eZoom>1?1:2.8; ePanX=0; ePanY=0; eclateApply(); }
+      lastTap=now;
+    } else if(keys.length===2){
+      const pts=Object.values(activeP);
+      lastDist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+    }
+  });
+  viewer.addEventListener('pointermove', e => {
+    if(!activeP[e.pointerId]) return;
+    e.preventDefault();
+    activeP[e.pointerId]={x:e.clientX,y:e.clientY};
+    const keys=Object.keys(activeP);
+    if(keys.length===2){
+      const pts=Object.values(activeP);
+      const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+      if(lastDist>0) eZoom=Math.max(1,Math.min(6,eZoom*(dist/lastDist)));
+      lastDist=dist; eclateClampPan(); eclateApply();
+    } else if(keys.length===1 && eZoom>1){
+      ePanX=startPX+(e.clientX-startX)/eZoom;
+      ePanY=startPY+(e.clientY-startY)/eZoom;
+      eclateClampPan(); eclateApply();
+    }
+  });
+  ['pointerup','pointercancel'].forEach(evt=>viewer.addEventListener(evt,e=>{
+    delete activeP[e.pointerId];
+    if(Object.keys(activeP).length<2) lastDist=0;
+  }));
+}
+
+// Init
+switchTab('moteur');
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body>
+</html>
